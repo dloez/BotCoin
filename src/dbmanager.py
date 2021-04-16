@@ -4,12 +4,16 @@ import random
 import sqlite3
 import os
 import sys
+from colorama import init, Fore
 
 
 # pylint: disable=R0903
 class DBManager:
     '''Manage database operations.'''
     def __init__(self, storage_dir, session_id):
+        # init colorama
+        init(autoreset=True)
+
         self._databases_dir = storage_dir / 'databases'
         self._last_session_file = storage_dir / 'last_session.pickle'
         self._session_id = None
@@ -25,7 +29,7 @@ class DBManager:
         else:
             self._session_id = session_id
 
-        print('Session id: {}'.format(self._session_id))
+        print(f'{Fore.GREEN}Session id: {self._session_id}')
 
         # create database connection
         database = str(self._databases_dir / self._session_id) + '.sqlite3'
@@ -46,7 +50,7 @@ class DBManager:
             with self._last_session_file.open('rb') as file:
                 self._session_id = pickle.load(file)
         else:
-            print('There is no last id, exiting...')
+            print(f'{Fore.RED}There is no last id, exiting...')
             sys.exit()
 
     def _dump_id(self):
