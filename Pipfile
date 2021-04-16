@@ -8,6 +8,7 @@ name = "pypi"
 [dev-packages]
 pylint = "*"
 pre-commit = "*"
+pytest = "*"
 
 [requires]
 python_version = "3.8"
