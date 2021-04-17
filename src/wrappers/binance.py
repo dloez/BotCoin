@@ -71,6 +71,7 @@ class Binance:
         Return balance for a single asset.
         '''
         account = await self.get_account()
+        print(account)
         balances = account['balances']
 
         balance = None
