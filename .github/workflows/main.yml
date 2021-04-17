@@ -18,5 +18,8 @@ jobs:
           pipenv install -d --system
       - name: Run Linter
         run: pylint --max-line-length=119 src
-      - name: Run tests
+      - name: Run Tests
+        env:
+          BINANCE_API_KEY: ${{ secrets.BINANCE_SECRET_KEY }}
+          BINANCE_API_SECRET: ${{ secrets.BINANCE_SECRET_SECRET }}
         run: pytest
