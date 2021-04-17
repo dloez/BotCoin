@@ -5,11 +5,14 @@ name = "pypi"
 
 [packages]
 colorama = "*"
+aiohttp = "*"
+requests = "*"
 
 [dev-packages]
 pylint = "*"
 pre-commit = "*"
 pytest = "*"
+pytest-asyncio = "*"
 
 [requires]
 python_version = "3.8"
