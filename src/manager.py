@@ -3,7 +3,7 @@ import sys
 from colorama import init, Fore
 
 from dbmanager import DBManager
-from strategies.csmacd import CSMACD
+from strategies.macd import MACD
 from requester import Requester
 
 
@@ -17,7 +17,7 @@ class Manager:
         self._requester = None
         self._strategies = []
         self._strategies_map = {
-            'CSMACD': CSMACD
+            'MACD': MACD
         }
 
         if args.strat.upper() not in self._strategies_map.keys():

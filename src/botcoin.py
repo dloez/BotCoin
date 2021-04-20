@@ -24,8 +24,8 @@ def parse_args(args):
 
     parser.add_argument(
         '--strat',
-        default='CSMACD',
-        help='strategy used for trading (Default = CSMACD). Available: CSMACD'
+        default='MACD',
+        help='strategy used for trading (Default = MACD). Available: MACD'
     )
 
     parser.add_argument(
