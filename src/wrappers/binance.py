@@ -6,7 +6,6 @@ import aiohttp
 import requests
 
 
-# pylint: disable=R0903
 class Binance:
     '''Manage authentication, uris, etc.'''
     def __init__(self, tokens):
