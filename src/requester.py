@@ -4,7 +4,7 @@ import asyncio
 from colorama import init, Fore
 
 from wrappers.binance import Binance
-from dbmanager import Table, RecordsGroup
+from dbmanager import Table, RecordGroup
 
 
 # pylint: disable=R0903
@@ -20,7 +20,6 @@ class Requester(threading.Thread):
         self._tables = {}
 
         self._init_database()
-        self.start()
 
     def _init_database(self):
         '''Create required tables.'''
@@ -51,14 +50,15 @@ class Requester(threading.Thread):
         '''Request and store the data needed by a strategy.'''
         requsites = strat.get_requisites()
         klines = await self._binance.get_klines(requsites['pair'])
-        klines = klines [-33:]
+        klines = klines[-33:]
 
-        records = RecordsGroup(strat.name)
+        records = RecordGroup(strat.name)
         for kline in klines:
             records.add_record(value=kline[4])
 
         self._dbmanager.truncate_table(self._tables[strat.name])
         self._dbmanager.insert(records)
 
-        # set intervl instead of fixed time
+        # set interval instead of fixed time
         await asyncio.sleep(1)
+        return True

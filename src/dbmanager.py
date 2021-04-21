@@ -63,6 +63,7 @@ class DBManager:
             cursor = conn.cursor()
             cursor.execute(table.generate_sql())
             cursor.close()
+            return True
 
     def insert(self, record):
         '''Insert record into table.'''
@@ -70,37 +71,47 @@ class DBManager:
             cursor = conn.cursor()
             cursor.execute(record.generate_sql())
             cursor.close()
+            return True
 
     def truncate_table(self, table):
         '''Delete and recreate table.'''
         with sqlite3.connect(self._get_database()) as conn:
             cursor = conn.cursor()
-            cursor.execute(f"DROP TABLE {table.name};")
+            cursor.execute(f'DROP TABLE {table.name};')
             cursor = conn.cursor()
             self.create_table(table)
+            return True
+
 
 class Table:
     '''Helper class to handle creation of sql tables.'''
     def __init__(self, name):
+        init(autoreset=True)
+
         self.name = name
         self._fields = []
 
     def add_field(self, name, data_type, primary_key=False, not_null=False):
         '''Add field to table.'''
+        for field in self._fields:
+            if name == field['name']:
+                print(f'{Fore.RED}You are trying to add a field with an already existing field name')
+                return None
         field = {
             'name': name,
-            'type': data_type,
+            'type': data_type.upper(),
             'primary_key': primary_key,
             'not_null': not_null
         }
 
         self._fields.append(field)
+        return field
 
     def generate_sql(self):
         '''Generate sql code.'''
-        sql = f'CREATE TABLE IF NOT EXISTS {self.name} (\n'
+        sql = f'CREATE TABLE IF NOT EXISTS {self.name} ('
         for field in self._fields:
-            sql += f"\t{field['name']} {field['type']} "
+            sql += f"{field['name']} {field['type']} "
 
             if field['primary_key']:
                 sql += 'PRIMARY KEY '
@@ -108,9 +119,10 @@ class Table:
             if field['not_null']:
                 sql += 'NOT NULL '
 
-            sql = sql[:-1] + ',\n'
-        sql = sql[:-2] + '\n);'
+            sql = sql[:-1] + ','
+        sql = sql[:-1] + ');'
         return sql
+
 
 # pylint: disable=R0903
 class Record:
@@ -126,16 +138,19 @@ class Record:
 
     def generate_sql(self):
         '''Generate sql code.'''
-        sql = f"INSERT INTO {self._fields['table']}\nVALUES("
+        sql = f"INSERT INTO {self._fields['table']} VALUES ("
         for field_name, field_value in self._fields.items():
             if field_name == 'table':
                 continue
-            sql += field_value + ','
+            if isinstance(field_value, str):
+                sql += f'"{field_value}",'
+            else:
+                sql += f'{field_value},'
         sql = sql[:-1] + ');'
         return sql
 
 
-class RecordsGroup:
+class RecordGroup:
     '''Helper class the creation of multiple sql records with a single call.'''
     def __init__(self, table):
         self._table = table
@@ -150,11 +165,14 @@ class RecordsGroup:
 
     def generate_sql(self):
         '''Generate sql code.'''
-        sql = f"INSERT INTO {self._table}\nVALUES"
+        sql = f'INSERT INTO {self._table} VALUES '
         for record in self._records:
-            sql += '\n\t('
+            sql += '('
             for field in record:
-                sql += f'{field},'
+                if isinstance(field, str):
+                    sql += f'"{field}",'
+                else:
+                    sql += f'{field},'
             sql = sql[:-1] + '),'
         sql = sql[:-1] + ';'
         return sql

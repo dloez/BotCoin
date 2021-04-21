@@ -33,3 +33,4 @@ class Manager:
         tokens = args.tokens.split('#')
         self._dbmanager = DBManager(storage_path, args.id)
         self._requester = Requester(self._dbmanager, self._strategies, tokens)
+        self._requester.start()
