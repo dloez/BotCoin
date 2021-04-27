@@ -77,10 +77,18 @@ class DBManager:
         '''Delete and recreate table.'''
         with sqlite3.connect(self._get_database()) as conn:
             cursor = conn.cursor()
-            cursor.execute(f'DROP TABLE {table.name};')
-            cursor = conn.cursor()
-            self.create_table(table)
+            cursor.execute(f'DELETE FROM {table};')
+            cursor.close()
             return True
+
+    def select(self, fields, table):
+        '''Select and return required fields in a table.'''
+        with sqlite3.connect(self._get_database()) as conn:
+            cursor = conn.cursor()
+            cursor.execute(f'SELECT {fields} FROM {table}')
+            records = cursor.fetchall()
+            cursor.close()
+            return records
 
 
 class Table:
@@ -91,8 +99,11 @@ class Table:
         self.name = name
         self._fields = []
 
-    def add_field(self, name, data_type, primary_key=False, not_null=False):
+    def add_field(self, name, data_type, atributes=None):
         '''Add field to table.'''
+        if not isinstance(atributes, list):
+            atributes = []
+
         for field in self._fields:
             if name == field['name']:
                 print(f'{Fore.RED}You are trying to add a field with an already existing field name')
@@ -100,8 +111,7 @@ class Table:
         field = {
             'name': name,
             'type': data_type.upper(),
-            'primary_key': primary_key,
-            'not_null': not_null
+            'atributes': atributes
         }
 
         self._fields.append(field)
@@ -113,11 +123,8 @@ class Table:
         for field in self._fields:
             sql += f"{field['name']} {field['type']} "
 
-            if field['primary_key']:
-                sql += 'PRIMARY KEY '
-
-            if field['not_null']:
-                sql += 'NOT NULL '
+            for atribute in field['atributes']:
+                sql += f'{atribute.upper()} '
 
             sql = sql[:-1] + ','
         sql = sql[:-1] + ');'

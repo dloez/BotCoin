@@ -14,6 +14,7 @@ pylint = "*"
 pre-commit = "*"
 pytest = "*"
 pytest-mock = "*"
+matplotlib = "*"
 
 [requires]
 python_version = "3.8"

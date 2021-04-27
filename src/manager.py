@@ -5,6 +5,7 @@ from colorama import init, Fore
 from dbmanager import DBManager
 from strategies.macd import MACD
 from requester import Requester
+from wrappers.binance import Binance
 
 
 # pylint: disable=R0903
@@ -14,6 +15,7 @@ class Manager:
         init(autoreset=True)
 
         self._dbmanager = None
+        self._binance = None
         self._requester = None
         self._strategies = []
         self._strategies_map = {
@@ -24,13 +26,29 @@ class Manager:
             print(f'{Fore.RED}{args.strat} does not exists.')
             sys.exit()
 
+        tokens = args.tokens.split('#')
+        self._binance = Binance(tokens)
+        self._dbmanager = DBManager(storage_path, args.id)
         if '_' not in args.strat_name:
-            strat = self._strategies_map[args.strat.upper()](args.strat.upper(), args.pair)
+            strat = self._strategies_map[args.strat.upper()](
+                args.strat.upper(),
+                args.pair,
+                self._dbmanager,
+                self._binance
+            )
         else:
-            strat = self._strategies_map[args.strat.upper()](args.strat_name, args.pair)
+            strat = self._strategies_map[args.strat.upper()](
+                args.strat_name,
+                args.pair,
+                self._dbmanager,
+                self._binance
+            )
         self._strategies.append(strat)
 
-        tokens = args.tokens.split('#')
-        self._dbmanager = DBManager(storage_path, args.id)
-        self._requester = Requester(self._dbmanager, self._strategies, tokens)
+        self._requester = Requester(self._dbmanager, self._strategies, self._binance)
         self._requester.start()
+        self._execute_strategies()
+
+    def _execute_strategies(self):
+        for strat in self._strategies:
+            strat.start()
