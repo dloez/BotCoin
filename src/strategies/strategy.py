@@ -32,7 +32,7 @@ class Strategy(threading.Thread):
             self._name = name
 
         self.prices_table = self._name + '_PRICES'
-        self.ordes_table = self._name + '_ORDERS'
+        self.orders_table = self._name + '_ORDERS'
         print(f'{Fore.GREEN}Strat name: {self.name}')
 
         self._create_tables()
@@ -43,6 +43,7 @@ class Strategy(threading.Thread):
 
     def _get_prices(self):
         values = self._dbmanager.select('value', self.prices_table)
+        print(values)
         clean_values = []
         for value in values:
             clean_values.append(*value)
@@ -53,7 +54,7 @@ class Strategy(threading.Thread):
         table.add_field(name='value', data_type='real', atributes=['not null'])
         self._dbmanager.create_table(table)
 
-        table = Table(self.ordes_table)
+        table = Table(self.orders_table)
         table.add_field(name='side', data_type='text', atributes=['not null'])
         table.add_field(name='price', data_type='real', atributes=['not null'])
         table.add_field(name='timestamp', data_type='datetime', atributes=['timestamp', 'not null'])

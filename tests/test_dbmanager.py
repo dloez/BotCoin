@@ -33,7 +33,7 @@ def test_add_field(table):
     field_1 = table.add_field(
         name='test_field_1',
         data_type='text',
-        primary_key='True'
+        atributes=['primary key']
     )
 
     field_2 = table.add_field(
@@ -49,7 +49,7 @@ def test_add_field(table):
     field_4 = table.add_field(
         name='test_field_3',
         data_type='real',
-        not_null=True
+        atributes=['not null']
     )
 
     # check that all fields are added or not
@@ -59,21 +59,20 @@ def test_add_field(table):
     assert isinstance(field_4, dict)
 
     # check that all fields has correct arguments
-    assert field_1['primary_key']
-    assert not field_1['not_null']
+    assert len(field_1['atributes']) == 1
+    assert 'primary key' in field_1['atributes']
 
-    assert not field_3['primary_key']
-    assert not field_3['not_null']
+    assert len(field_3['atributes']) == 0
 
-    assert not field_4['primary_key']
-    assert field_4['not_null']
+    assert len(field_4['atributes']) == 1
+    assert 'not null' in field_4['atributes']
 
 
 def test_table_generate_sql(table):
     '''Test if sql code is correctly generated.'''
-    table.add_field(name='test_field_1', data_type='text', primary_key='True')
+    table.add_field(name='test_field_1', data_type='text', atributes=['primary key'])
     table.add_field(name='test_field_2', data_type='real')
-    table.add_field(name='test_field_3', data_type='real', not_null=True)
+    table.add_field(name='test_field_3', data_type='real', atributes=['not null'])
 
     sql = (
         f'CREATE TABLE IF NOT EXISTS {TABLE_NAME} ('
@@ -143,7 +142,7 @@ def test_group_generate_sql(group):
     assert sql == group.generate_sql()
 
 
-# DBManager || Should we mock Table, Record and RecordGroup?
+# DBManager
 @pytest.fixture
 def manager():
     '''Manage dbmanager as a test resource.'''
@@ -187,7 +186,9 @@ def test_truncate_table(manager, table):
     '''Test if table has been truncated.'''
     table.add_field(name='test_field_1', data_type='TEXT')
     table.add_field(name='test_field_2', data_type='TEXT')
-    assert manager.truncate_table(table)
+    manager.create_table(table)
+
+    assert manager.truncate_table(table.name)
 
 
 @pytest.fixture(scope="session", autouse=True)

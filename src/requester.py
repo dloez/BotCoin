@@ -18,11 +18,11 @@ class Requester(threading.Thread):
         self._binance = binance
 
     def run(self):
+        print(f'{Fore.BLUE}Initializing requester...')
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
         asyncio.ensure_future(self._handle_tasks())
         loop.run_forever()
-        print(f'{Fore.BLUE}Initilizing requester...')
 
     async def _handle_tasks(self):
         '''Define and run multiple asyncio tasks.'''

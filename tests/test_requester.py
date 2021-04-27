@@ -15,6 +15,14 @@ BINANCE_API_KEY = os.environ['BINANCE_API_KEY']
 BINANCE_API_SECRET = os.environ['BINANCE_API_SECRET']
 BINANCE_GET_KLINES = [[0, 0, 0, 0, 0]] * 33
 
+
+class AsyncMock(MagicMock):
+    '''Chill class of MagicMock to return awaitables.'''
+    # pylint: disable=W0235, W0236
+    async def __call__(self, *args, **kwargs):
+        return super().__call__(*args, **kwargs)
+
+
 # pylint: disable=W0212,W0621
 @pytest.fixture
 def strategies():
@@ -26,16 +34,17 @@ def strategies():
 
 
 @pytest.fixture
-def requester(mocker, strategies):
+def requester(strategies):
     '''Manage requester as a test resource and isolate module.'''
     dbmanager_mock = MagicMock()
     dbmanager_mock.create_table.return_value = True
     dbmanager_mock.truncate_table.return_value = True
     dbmanager_mock.insert.return_value = True
 
-    requester_fix = Requester(dbmanager_mock, strategies, [BINANCE_API_KEY, BINANCE_API_SECRET])
-    mocked_get_klines = mocker.patch.object(requester_fix._binance, 'get_klines')
-    mocked_get_klines.return_value = BINANCE_GET_KLINES
+    binance_mock = AsyncMock()
+    binance_mock.get_klines.return_value = BINANCE_GET_KLINES
+
+    requester_fix = Requester(dbmanager_mock, strategies, binance_mock)
     return requester_fix
 
 
@@ -43,14 +52,6 @@ def test_init(requester, strategies):
     '''Test if init values are correctly settled.'''
     assert isinstance(requester._strategies, list)
     assert len(requester._strategies) == len(strategies)
-
-
-def test_init_database(requester, strategies):
-    '''Test that tables has been created in the database.'''
-    for strat in strategies:
-        assert strat.name in requester._tables.keys()
-
-    requester._dbmanager.create_table.assert_called()
 
 
 @pytest.mark.asyncio
