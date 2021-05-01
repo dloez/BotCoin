@@ -5,47 +5,49 @@ from colorama import init, Fore
 from dbmanager import DBManager
 from strategies.macd import MACD
 from requester import Requester
-from wrappers.binance import Binance
 
 
 # pylint: disable=R0903
 class Manager:
     '''Interface between strategies and db, collectores, etc.'''
-    def __init__(self, storage_path, args):
+    def __init__(self, storage_path, config):
         init(autoreset=True)
 
         self._dbmanager = None
-        self._binance = None
         self._requester = None
         self._strategies = []
         self._strategies_map = {
             'MACD': MACD
         }
 
-        if args.strat.upper() not in self._strategies_map.keys():
-            print(f'{Fore.RED}{args.strat} does not exists.')
-            sys.exit()
+        self._dbmanager = DBManager(storage_path, config.id)
+        for strat in config.strategies:
+            if strat['strat'].upper() not in self._strategies_map.keys():
+                print(f"{Fore.RED}{strat['strat']} does not exists.")
+                sys.exit()
 
-        tokens = args.tokens.split('#')
-        self._binance = Binance(tokens)
-        self._dbmanager = DBManager(storage_path, args.id)
-        if '_' not in args.strat_name:
-            strat = self._strategies_map[args.strat.upper()](
-                args.strat.upper(),
-                args.pair,
-                self._dbmanager,
-                self._binance
-            )
-        else:
-            strat = self._strategies_map[args.strat.upper()](
-                args.strat_name,
-                args.pair,
-                self._dbmanager,
-                self._binance
-            )
-        self._strategies.append(strat)
+            tokens = strat['tokens']
+            arguments = {}
+            arguments['interval'] = strat['interval']
+            arguments['pair'] = strat['pair']
 
-        self._requester = Requester(self._dbmanager, self._strategies, self._binance)
+            if '_' not in strat['name']:
+                strat = self._strategies_map[strat['strat'].upper()](
+                    self._dbmanager,
+                    tokens,
+                    strat['strat'].upper(),
+                    arguments
+                )
+            else:
+                strat = self._strategies_map[strat['strat'].upper()](
+                    self._dbmanager,
+                    tokens,
+                    strat['name'].upper(),
+                    arguments
+                )
+            self._strategies.append(strat)
+
+        self._requester = Requester(self._dbmanager, self._strategies)
         self._requester.start()
         self._execute_strategies()
 

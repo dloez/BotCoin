@@ -5,6 +5,7 @@ from datetime import datetime
 from colorama import init, Fore
 
 from dbmanager import Table
+from wrappers.binance import Binance
 
 
 def sync(interval):
@@ -15,16 +16,13 @@ def sync(interval):
 
 class Strategy(threading.Thread):
     '''Define structure of all strategies.'''
-    def __init__(self, name, pair, dbmanager, binance):
+    def __init__(self, dbmanager, tokens, name, arguments):
         threading.Thread.__init__(self)
         init(autoreset=True)
 
+        self._binance = Binance(key=tokens['binance_api_key'], secret=tokens['binance_api_secret'])
         self._dbmanager = dbmanager
-        self._binance = binance
-        self._pair = pair
-        self._requisites = {
-            'pair': self._pair
-        }
+        self._requisites = arguments
 
         if '_' not in name:
             self._name = f'{name}_{str(random.randint(100000, 999999))}'
@@ -43,7 +41,6 @@ class Strategy(threading.Thread):
 
     def _get_prices(self):
         values = self._dbmanager.select('value', self.prices_table)
-        print(values)
         clean_values = []
         for value in values:
             clean_values.append(*value)

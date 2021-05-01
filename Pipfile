@@ -8,6 +8,7 @@ colorama = "*"
 requests = "*"
 aiohttp = "*"
 pytest-asyncio = "*"
+pyyaml = "*"
 
 [dev-packages]
 pylint = "*"

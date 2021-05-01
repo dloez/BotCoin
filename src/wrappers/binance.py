@@ -8,8 +8,8 @@ import requests
 
 class Binance:
     '''Manage authentication, uris, etc.'''
-    def __init__(self, tokens):
-        self._tokens = tokens
+    def __init__(self, key='', secret=''):
+        self._tokens = (key, secret)
 
         self._base_url = 'https://api.binance.com'
         self._timestamp_offset = 0
@@ -42,7 +42,7 @@ class Binance:
         return params
 
     def _get(self, url, params):
-        '''Perform get request to get data from BINANCE REST API.'''
+        '''Perform get request to get data from Binance REST API.'''
         return requests.get(f'{url}?{params}', headers=self._headers).json()
 
     async def _async_get(self, url, params):
