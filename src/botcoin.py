@@ -39,7 +39,8 @@ def parse_args(args):
 
     parser.add_argument(
         '--interval',
-        default='1',
+        default=1,
+        type=int,
         help='define interval of strategy data in minutues (Default = 1). Min: 1.'
     )
 

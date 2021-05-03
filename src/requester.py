@@ -46,6 +46,5 @@ class Requester(threading.Thread):
         self._dbmanager.truncate_table(strat.prices_table)
         self._dbmanager.insert(records)
 
-        # set interval instead of fixed time
         await asyncio.sleep(1)
         return True

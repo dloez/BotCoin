@@ -7,26 +7,25 @@ from unittest.mock import MagicMock
 import pytest
 
 from src.strategies.macd import MACD
+from .test_strategy import TOKENS, STRATEGY_NAME, STRATEGY_ARGUMENTS, DBMANAGER_SELECT
 
 
-STRATEGY_NAME = 'TEST_000000'
-PAIR = 'XRPUSDT'
-DBMANAGER_SELECT = [(0,)] * 1000
-
-
+# pylint: disable=W0212,W0621
 @pytest.fixture
 def macd():
     '''Manage macd as a test resource.'''
-    binance_mock = MagicMock()
-
     dbmanager_mock = MagicMock()
     dbmanager_mock.create_table.return_value = True
     dbmanager_mock.select.return_value = DBMANAGER_SELECT
 
-    return MACD(STRATEGY_NAME, PAIR, dbmanager_mock, binance_mock)
+    binance_mock = MagicMock()
+
+    macd_fix = MACD(dbmanager_mock, TOKENS, STRATEGY_NAME, STRATEGY_ARGUMENTS)
+    macd_fix._binance = binance_mock
+
+    return  macd_fix
 
 
-# pylint: disable=W0212,W0621
 def test_wait_prices(macd):
     '''Test if method returns prices.'''
     prices = macd._wait_prices()

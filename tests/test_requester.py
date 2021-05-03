@@ -1,26 +1,15 @@
 '''Test module.'''
 import sys
-
 sys.path.append('./src')
 
 # pylint: disable=C0413
-import os
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, AsyncMock
 import pytest
 
 from src.requester import Requester
 
 
-BINANCE_API_KEY = os.environ['BINANCE_API_KEY']
-BINANCE_API_SECRET = os.environ['BINANCE_API_SECRET']
-BINANCE_GET_KLINES = [[0, 0, 0, 0, 0]] * 33
-
-
-class AsyncMock(MagicMock):
-    '''Chill class of MagicMock to return awaitables.'''
-    # pylint: disable=W0235, W0236
-    async def __call__(self, *args, **kwargs):
-        return super().__call__(*args, **kwargs)
+BINANCE_GET_KLINES = [[0, 0, 0, 0, 0]] * 100
 
 
 # pylint: disable=W0212,W0621
@@ -29,12 +18,12 @@ def strategies():
     '''Manage strategies as a test resource.'''
     macd_mock = MagicMock()
     macd_mock.name.return_value = 'MACD_000000'
-    macd_mock.get_requisites.return_value = {'pair': 'XRPUSDT'}
+    macd_mock.get_requisites.return_value = {'pair': 'XRPUSDT', 'interval': 1}
     return [macd_mock]
 
 
 @pytest.fixture
-def requester(strategies):
+def requester(mocker, strategies):
     '''Manage requester as a test resource and isolate module.'''
     dbmanager_mock = MagicMock()
     dbmanager_mock.create_table.return_value = True
@@ -44,8 +33,10 @@ def requester(strategies):
     binance_mock = AsyncMock()
     binance_mock.get_klines.return_value = BINANCE_GET_KLINES
 
-    requester_fix = Requester(dbmanager_mock, strategies, binance_mock)
-    return requester_fix
+    binance_mocker = mocker.patch('src.requester.Binance')
+    binance_mocker.return_value = binance_mock
+
+    return Requester(dbmanager_mock, strategies)
 
 
 def test_init(requester, strategies):

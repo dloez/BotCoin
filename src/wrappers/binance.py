@@ -15,7 +15,6 @@ class Binance:
         self._timestamp_offset = 0
         self._headers = {'X-MBX-APIKEY': self._tokens[0]}
 
-        self._set_timestamp_offset()
 
     def _set_timestamp_offset(self):
         '''Calculate difference between binance server timestamp and server.'''
@@ -26,6 +25,9 @@ class Binance:
 
     def _add_signature(self, params):
         '''Append timestamp and signature tu params.'''
+        if not self._timestamp_offset:
+            self._set_timestamp_offset()
+
         timestamp = int(time.time() * 1000 + self._timestamp_offset)
         if not params:
             params = f'timestamp={timestamp}'

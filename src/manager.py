@@ -48,9 +48,10 @@ class Manager:
             self._strategies.append(strat)
 
         self._requester = Requester(self._dbmanager, self._strategies)
-        self._requester.start()
         self._execute_strategies()
 
     def _execute_strategies(self):
+        self._requester.start()
+
         for strat in self._strategies:
             strat.start()

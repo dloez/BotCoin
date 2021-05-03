@@ -1,45 +1,49 @@
 '''Test module.'''
 import sys
-
 sys.path.append('./src')
 
 # pylint: disable=C0413
+import os
 from unittest.mock import MagicMock
 import pytest
 
 from src.strategies.strategy import Strategy
+from src.strategies.strategy import sync
 
 
+TOKENS = {
+    'binance_api_key': os.environ['BINANCE_API_KEY'],
+    'binance_api_secret': os.environ['BINANCE_API_SECRET']
+}
 STRATEGY_NAME = 'TEST_000000'
-PAIR = 'XRPUSDT'
+STRATEGY_ARGUMENTS = {
+    'pair': 'XRPUSDT',
+    'interval': 1
+}
 DBMANAGER_SELECT = [(0,)] * 1000
 
-@pytest.fixture
-def strategy():
-    '''Manager strategy as a test resource.'''
-    binance_mock = MagicMock()
 
+# pylint: disable=W0212,W0621
+@pytest.fixture
+def strategy(mocker):
+    '''Manager strategy as a test resource.'''
     dbmanager_mock = MagicMock()
     dbmanager_mock.create_table.return_value = True
     dbmanager_mock.select.return_value = DBMANAGER_SELECT
 
-    return Strategy(STRATEGY_NAME, PAIR, dbmanager_mock, binance_mock)
+    binance_mocker = mocker.patch('src.strategies.strategy.Binance')
+    binance_mocker.return_value = MagicMock()
+
+    strategy_fix = Strategy(dbmanager_mock, TOKENS, STRATEGY_NAME, STRATEGY_ARGUMENTS)
+    return strategy_fix
 
 
-# pylint: disable=W0212,W0621
 def test_init(strategy):
     '''Test if init values are correctly settled.'''
-    assert strategy._pair == PAIR
     assert strategy._name == STRATEGY_NAME
-    assert strategy._requisites == {'pair': 'XRPUSDT'}
+    assert strategy._requisites == STRATEGY_ARGUMENTS
     assert strategy.prices_table == STRATEGY_NAME + '_PRICES'
     assert strategy.orders_table == STRATEGY_NAME + '_ORDERS'
-
-
-def test_requisites(strategy):
-    '''Test that strategies are returnning correct requisites.'''
-    assert isinstance(strategy.get_requisites(), dict)
-    assert 'pair' in strategy.get_requisites().keys()
 
 
 def test_create_tables(strategy):
@@ -53,3 +57,8 @@ def test_get_prices(strategy):
     strategy._dbmanager.select.assert_called_once()
     assert isinstance(prices, list)
     assert len(prices) == len(DBMANAGER_SELECT)
+
+
+def test_sync():
+    '''Test if sync method returns int value.'''
+    assert isinstance(sync(60), int)

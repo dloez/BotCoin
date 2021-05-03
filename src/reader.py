@@ -25,7 +25,7 @@ def read(init_file):
 
     # check strategies
     if 'strategies' not in init_content.keys():
-        config.error = 'no strategies found'
+        config.error = 'missing strategies'
         return config
 
     # check that config file has tokens or each strat has tokens
@@ -75,5 +75,5 @@ def read(init_file):
 
         config.strategies.append(new_strat)
 
-    config.error = ''
+    config.error = None
     return config
