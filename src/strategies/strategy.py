@@ -2,7 +2,7 @@
 import threading
 import random
 from datetime import datetime
-from colorama import init, Fore
+from colorama import Fore
 
 from dbmanager import Table
 from wrappers.binance import Binance
@@ -18,7 +18,6 @@ class Strategy(threading.Thread):
     '''Define structure of all strategies.'''
     def __init__(self, dbmanager, tokens, name, arguments):
         threading.Thread.__init__(self)
-        init(autoreset=True)
 
         self._binance = Binance(key=tokens['binance_api_key'], secret=tokens['binance_api_secret'])
         self._dbmanager = dbmanager

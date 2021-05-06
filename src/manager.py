@@ -1,6 +1,6 @@
 '''Store all necesary strategies and communicate them with database, data collectors, etc.'''
 import sys
-from colorama import init, Fore
+from colorama import Fore
 
 from dbmanager import DBManager
 from strategies.macd import MACD
@@ -11,8 +11,6 @@ from requester import Requester
 class Manager:
     '''Interface between strategies and db, collectores, etc.'''
     def __init__(self, storage_path, config):
-        init(autoreset=True)
-
         self._dbmanager = None
         self._requester = None
         self._strategies = []

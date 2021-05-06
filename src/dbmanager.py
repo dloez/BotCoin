@@ -4,15 +4,12 @@ import random
 import sqlite3
 import os
 import sys
-from colorama import init, Fore
+from colorama import Fore
 
 
 class DBManager:
     '''Manage database operations.'''
     def __init__(self, storage_dir, session_id):
-        # init colorama
-        init(autoreset=True)
-
         self._databases_dir = storage_dir / 'databases'
         self._last_session_file = storage_dir / 'last_session.pickle'
         self._session_id = None
@@ -94,8 +91,6 @@ class DBManager:
 class Table:
     '''Helper class to handle creation of sql tables.'''
     def __init__(self, name):
-        init(autoreset=True)
-
         self.name = name
         self._fields = []
 
@@ -135,7 +130,6 @@ class Table:
 class Record:
     '''Helper class to handle creation of sql records.'''
     def __init__(self, **kwargs):
-        init(autoreset=True)
         self._fields = {}
 
         if 'table' not in kwargs:
