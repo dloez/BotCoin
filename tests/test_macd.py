@@ -7,7 +7,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from src.strategies.macd import MACD
-from .test_strategy import TOKENS, STRATEGY_NAME, STRATEGY_ARGUMENTS, DBMANAGER_SELECT
+from .test_strategy import ARGUMENTS, DBMANAGER_SELECT
 
 
 # pylint: disable=W0212,W0621
@@ -20,7 +20,7 @@ def macd():
 
     binance_mock = MagicMock()
 
-    macd_fix = MACD(dbmanager_mock, TOKENS, STRATEGY_NAME, STRATEGY_ARGUMENTS)
+    macd_fix = MACD(dbmanager_mock, ARGUMENTS)
     macd_fix._binance = binance_mock
 
     return  macd_fix

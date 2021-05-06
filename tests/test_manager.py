@@ -33,8 +33,9 @@ CONFIG = SimpleNamespace(
                 'binance_api_secret': '1M4ruKpeNOJrWjtHBDpGM1rhV7HBHDx5GQOm3NlSJSrN37Rt1LOD7ijxMpeioywm'
             },
             'name': 'MACD_000001',
+            'pair': 'BTCUSDT',
             'interval': 1,
-            'pair': 'BTCUSDT'
+            'offset': 0
         }
     ]
 )

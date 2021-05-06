@@ -85,8 +85,8 @@ def read_arguments(args):
             'binance_api_secret': args.tokens.split('#')[1]
         },
         'name': args.name,
-        'interval': args.interval,
         'pair': args.pair,
+        'interval': args.interval,
         'offset': args.offset
     }
     config.strategies = []

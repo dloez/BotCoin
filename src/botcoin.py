@@ -37,16 +37,16 @@ def parse_args(args):
     )
 
     parser.add_argument(
+        '--pair',
+        default='XRPUSDT',
+        help='pair of cryptos used for trading. Example: XRPUSDT, BTCUSDT...'
+    )
+
+    parser.add_argument(
         '--interval',
         default=1,
         type=int,
         help='define interval of strategy data in minutues (Default = 1). Min: 1.'
-    )
-
-    parser.add_argument(
-        '--pair',
-        default='XRPUSDT',
-        help='pair of cryptos used for trading. Example: XRPUSDT, BTCUSDT...'
     )
 
     parser.add_argument(
