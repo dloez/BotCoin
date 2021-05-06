@@ -15,6 +15,7 @@ def test_parser():
         '--name',       'MACD_000000',
         '--interval',   '2',
         '--pair',       'BTCUSDT',
+        '--offset',     '0',
         '--tokens',     '123#123'
     ])
 
@@ -22,8 +23,9 @@ def test_parser():
     assert parser.id == '123'
     assert parser.strat == 'TEST'
     assert parser.name == 'MACD_000000'
-    assert parser.interval == 2
     assert parser.pair == 'BTCUSDT'
+    assert parser.interval == 2
+    assert parser.offset == 0
     assert parser.tokens == '123#123'
 
     parser = parse_args([
@@ -36,4 +38,5 @@ def test_parser():
     assert not parser.name
     assert parser.pair == 'XRPUSDT'
     assert parser.interval == 1
+    assert parser.offset == 0
     assert parser.tokens == '123#123'

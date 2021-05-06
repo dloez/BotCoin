@@ -1,5 +1,6 @@
 '''Store all necesary strategies and communicate them with database, data collectors, etc.'''
 import sys
+import random
 from colorama import Fore
 
 from dbmanager import DBManager
@@ -24,25 +25,13 @@ class Manager:
                 print(f"{Fore.RED}{strat['strat']} does not exists.")
                 sys.exit()
 
-            tokens = strat['tokens']
             arguments = {}
-            arguments['interval'] = strat['interval']
-            arguments['pair'] = strat['pair']
+            for field, value in strat.items():
+                if field == 'name' and not value:
+                    value = f"{strat['strat']}_{random.randint(100000, 999999)}"
+                arguments[field] = value
 
-            if '_' not in strat['name']:
-                strat = self._strategies_map[strat['strat'].upper()](
-                    self._dbmanager,
-                    tokens,
-                    strat['strat'].upper(),
-                    arguments
-                )
-            else:
-                strat = self._strategies_map[strat['strat'].upper()](
-                    self._dbmanager,
-                    tokens,
-                    strat['name'].upper(),
-                    arguments
-                )
+            strat = self._strategies_map[strat['strat'].upper()](self._dbmanager, arguments)
             self._strategies.append(strat)
 
         self._requester = Requester(self._dbmanager, self._strategies)

@@ -11,14 +11,15 @@ from src.strategies.strategy import Strategy
 from src.strategies.strategy import sync
 
 
-TOKENS = {
-    'binance_api_key': os.environ['BINANCE_API_KEY'],
-    'binance_api_secret': os.environ['BINANCE_API_SECRET']
-}
-STRATEGY_NAME = 'TEST_000000'
-STRATEGY_ARGUMENTS = {
+ARGUMENTS = {
+    'tokens': {
+        'binance_api_key': os.environ['BINANCE_API_KEY'],
+        'binance_api_secret': os.environ['BINANCE_API_SECRET']
+    },
+    'name': 'TEST',
     'pair': 'XRPUSDT',
-    'interval': 1
+    'interval': 1,
+    'offset': 0
 }
 DBMANAGER_SELECT = [(0,)] * 1000
 
@@ -34,16 +35,16 @@ def strategy(mocker):
     binance_mocker = mocker.patch('src.strategies.strategy.Binance')
     binance_mocker.return_value = MagicMock()
 
-    strategy_fix = Strategy(dbmanager_mock, TOKENS, STRATEGY_NAME, STRATEGY_ARGUMENTS)
+    strategy_fix = Strategy(dbmanager_mock, ARGUMENTS)
     return strategy_fix
 
 
 def test_init(strategy):
     '''Test if init values are correctly settled.'''
-    assert strategy._name == STRATEGY_NAME
-    assert strategy._requisites == STRATEGY_ARGUMENTS
-    assert strategy.prices_table == STRATEGY_NAME + '_PRICES'
-    assert strategy.orders_table == STRATEGY_NAME + '_ORDERS'
+    assert strategy._name == ARGUMENTS['name']
+    assert strategy.arguments == ARGUMENTS
+    assert strategy.prices_table == 'PRICES_XRPUSDT_1'
+    assert strategy.orders_table == 'ORDERS_TEST'
 
 
 def test_create_tables(strategy):

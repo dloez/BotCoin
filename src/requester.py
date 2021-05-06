@@ -19,23 +19,25 @@ class Requester(threading.Thread):
 
     def run(self):
         print(f'{Fore.BLUE}Initializing requester...')
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        asyncio.ensure_future(self._handle_tasks())
-        loop.run_forever()
+        asyncio.run(self._handle_tasks())
 
     async def _handle_tasks(self):
         '''Define and run multiple asyncio tasks.'''
-        tasks = []
-        for strat in self._strategies:
-            tasks.append(asyncio.create_task(self._request_data(strat)))
+        while True:
+            tasks = []
+            requisites = []
+            for strat in self._strategies:
+                strat_requisites = strat.arguments
+                new_requisites = (strat_requisites['pair'], strat_requisites['interval'])
 
-        await asyncio.wait(tasks)
-        asyncio.ensure_future(self._handle_tasks())
+                if new_requisites not in requisites:
+                    tasks.append(asyncio.create_task(self._request_data(strat)))
+                    requisites.append(new_requisites)
+            await asyncio.wait(tasks)
 
     async def _request_data(self, strat):
         '''Request and store the data needed by a strategy.'''
-        requisites = strat.get_requisites()
+        requisites = strat.arguments
         klines = await self._binance.get_klines(requisites['pair'], f"{requisites['interval']}m")
 
         records = RecordGroup(strat.prices_table)

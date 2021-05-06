@@ -4,13 +4,17 @@ from types import SimpleNamespace
 import yaml
 
 
-DEFAULT_INTERVAL = 1 # minutes
-DEFAULT_PAIR = 'XRPUSDT'
+DEFAULT_FIELDS = {
+    'name': None,
+    'interval': 1, # minutes
+    'pair': 'XRPUSDT',
+    'offset': 0
+}
 
 
 # pylint: disable=R0912
-def read(init_file):
-    '''Read and parse init file. Search for missing arguments/errors.'''
+def read_file(init_file):
+    '''Read and parse init file and return config. Search for missing arguments/errors.'''
     init_file = Path(init_file)
     config = SimpleNamespace()
 
@@ -58,22 +62,34 @@ def read(init_file):
         else:
             new_strat['tokens'] = strat['tokens']
 
-        if 'name' not in strat.keys():
-            new_strat['name'] = None
-        else:
-            new_strat['name'] = strat['name']
-
-        if 'interval' not in strat.keys():
-            new_strat['interval'] = DEFAULT_INTERVAL
-        else:
-            new_strat['interval'] = strat['interval']
-
-        if 'pair' not in strat.keys():
-            new_strat['pair'] = DEFAULT_PAIR
-        else:
-            new_strat['pair'] = strat['pair']
-
+        for field, value in DEFAULT_FIELDS.items():
+            if field not in strat.keys():
+                new_strat[field] = value
+            else:
+                new_strat[field] = strat[field]
         config.strategies.append(new_strat)
 
     config.error = None
+    return config
+
+
+def read_arguments(args):
+    '''Read arguments and return config.'''
+    config = SimpleNamespace()
+    config.id = args.id
+
+    strat = {
+        'strat': args.strat,
+        'tokens': {
+            'binance_api_key': args.tokens.split('#')[0],
+            'binance_api_secret': args.tokens.split('#')[1]
+        },
+        'name': args.name,
+        'pair': args.pair,
+        'interval': args.interval,
+        'offset': args.offset
+    }
+    config.strategies = []
+    config.strategies.append(strat)
+
     return config

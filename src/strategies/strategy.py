@@ -1,6 +1,5 @@
 '''Parent of strategies.'''
 import threading
-import random
 from datetime import datetime
 from colorama import Fore
 
@@ -16,27 +15,20 @@ def sync(interval):
 
 class Strategy(threading.Thread):
     '''Define structure of all strategies.'''
-    def __init__(self, dbmanager, tokens, name, arguments):
+    def __init__(self, dbmanager, arguments):
         threading.Thread.__init__(self)
 
+        tokens = arguments['tokens']
         self._binance = Binance(key=tokens['binance_api_key'], secret=tokens['binance_api_secret'])
         self._dbmanager = dbmanager
-        self._requisites = arguments
+        self._name = arguments['name']
+        self.arguments = arguments
 
-        if '_' not in name:
-            self._name = f'{name}_{str(random.randint(100000, 999999))}'
-        else:
-            self._name = name
-
-        self.prices_table = self._name + '_PRICES'
-        self.orders_table = self._name + '_ORDERS'
+        self.prices_table = f"PRICES_{self.arguments['pair']}_{self.arguments['interval']}"
+        self.orders_table = f"ORDERS_{self.arguments['name']}"
         print(f'{Fore.GREEN}Strat name: {self.name}')
 
         self._create_tables()
-
-    def get_requisites(self):
-        '''Return requisites.'''
-        return self._requisites
 
     def _get_prices(self):
         values = self._dbmanager.select('value', self.prices_table)
