@@ -1,7 +1,7 @@
 '''Comunicate REST APIs, strategies and databases'''
 import threading
 import asyncio
-from colorama import init, Fore
+from colorama import Fore
 
 from dbmanager import RecordGroup
 from wrappers.binance import Binance
@@ -12,7 +12,6 @@ class Requester(threading.Thread):
     '''Recollect and store all data required by strategies.'''
     def __init__(self, dbmanager, strategies):
         threading.Thread.__init__(self)
-        init(autoreset=True)
 
         self._dbmanager = dbmanager
         self._strategies = strategies

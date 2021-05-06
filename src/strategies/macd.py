@@ -1,6 +1,6 @@
 '''Define bot strategy.'''
 import time
-from colorama import init, Fore
+from colorama import Fore
 
 from strategies.strategy import Strategy
 from strategies.strategy import sync
@@ -11,7 +11,6 @@ class MACD(Strategy):
     '''Implements MACD trading algorithm.'''
     def __init__(self, dbmanager, tokens, name, arguments):
         Strategy.__init__(self, dbmanager, tokens, name, arguments)
-        init(autoreset=True)
 
     # pylint: disable=C0103
     def run(self):
