@@ -2,11 +2,10 @@
 '''Interface between user and the trader bot.'''
 import argparse
 import sys
-from types import SimpleNamespace
 from pathlib import Path
 from colorama import init, Fore
 
-from reader import read
+from reader import read_file, read_arguments
 from manager import Manager
 
 
@@ -51,33 +50,19 @@ def parse_args(args):
     )
 
     parser.add_argument(
+        '--offset',
+        default=0,
+        type=float,
+        help='orders price offset (Default = 0).'
+    )
+
+    parser.add_argument(
         '--tokens',
         default=None,
         help='binance REST API key and secret. Format: api_key#api_secret'
     )
 
     return parser.parse_args(args)
-
-
-def from_args_to_config(args):
-    '''Prepare arguments to fit config namespace'''
-    config = SimpleNamespace()
-    config.id = args.id
-
-    strat = {
-        'strat': args.strat,
-        'tokens': {
-            'binance_api_key': args.tokens.split('#')[0],
-            'binance_api_secret': args.tokens.split('#')[1]
-        },
-        'name': args.name,
-        'interval': args.interval,
-        'pair': args.pair
-    }
-    config.strategies = []
-    config.strategies.append(strat)
-
-    return config
 
 
 def main():
@@ -88,7 +73,7 @@ def main():
     config = None
     if args.init:
         # There is a config file
-        config = read(args.init)
+        config = read_file(args.init)
         if config.error:
             print(f'{Fore.RED}Found errors during init file processing, error: {config.error}. Exiting...')
             sys.exit()
@@ -98,7 +83,7 @@ def main():
         sys.exit()
     else:
         # No config file + required tokens
-        config = from_args_to_config(args)
+        config = read_arguments(args)
 
     # pylint: disable=W0612
     manager = Manager(STORAGE_DIR, config)

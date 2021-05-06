@@ -9,8 +9,8 @@ from strategies.strategy import sync
 # pylint: disable=R0903
 class MACD(Strategy):
     '''Implements MACD trading algorithm.'''
-    def __init__(self, dbmanager, tokens, name, arguments):
-        Strategy.__init__(self, dbmanager, tokens, name, arguments)
+    def __init__(self, dbmanager, arguments):
+        Strategy.__init__(self, dbmanager, arguments)
 
     # pylint: disable=C0103
     def run(self):
