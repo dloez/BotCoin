@@ -10,7 +10,7 @@ from manager import Manager
 
 
 def parse_args(args):
-    '''This is required to test arguments.'''
+    '''Parse args. This is required to test arguments.'''
     parser = argparse.ArgumentParser(description='Automate crypto trades.')
     parser.add_argument(
         '--init',

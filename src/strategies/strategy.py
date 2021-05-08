@@ -3,7 +3,7 @@ import threading
 from datetime import datetime
 from colorama import Fore
 
-from dbmanager import Table
+from dbmanager import Table, Record
 from wrappers.binance import Binance
 
 
@@ -47,3 +47,35 @@ class Strategy(threading.Thread):
         table.add_field(name='price', data_type='real', atributes=['not null'])
         table.add_field(name='timestamp', data_type='datetime', atributes=['timestamp', 'not null'])
         self._dbmanager.create_table(table)
+
+    def _purchase(self):
+        price = float(self._binance.get_avg_price(self.arguments['pair'])['price']) + self.arguments['offset']
+        time = datetime.utcnow().strftime('%m/%d/%Y, %H:%M:%S')
+        purchase = Record(
+            table=self.orders_table,
+            side='buy',
+            prices=price,
+            timestamp=time
+        )
+        self._dbmanager.insert(purchase)
+        return price
+
+    def _sell(self):
+        price = float(self._binance.get_avg_price(self.arguments['pair'])['price']) - self.arguments['offset']
+        time = datetime.utcnow().strftime('%m/%d/%Y, %H:%M:%S')
+        purchase = Record(
+            table=self.orders_table,
+            side='sell',
+            prices=price,
+            timestamp=time
+        )
+        self._dbmanager.insert(purchase)
+        return price
+
+    def _get_last_order(self):
+        last_order =  self._dbmanager.select('*', self.orders_table, 'ORDER BY rowid DESC LIMIT 1')
+        if len(last_order):
+            last_order = last_order[0]
+        else:
+            last_order = None
+        return last_order

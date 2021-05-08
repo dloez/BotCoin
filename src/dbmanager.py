@@ -78,11 +78,11 @@ class DBManager:
             cursor.close()
             return True
 
-    def select(self, fields, table):
+    def select(self, fields, table, args=None):
         '''Select and return required fields in a table.'''
         with sqlite3.connect(self._get_database()) as conn:
             cursor = conn.cursor()
-            cursor.execute(f'SELECT {fields} FROM {table}')
+            cursor.execute(f'SELECT {fields} FROM {table} {args};')
             records = cursor.fetchall()
             cursor.close()
             return records

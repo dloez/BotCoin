@@ -1,4 +1,5 @@
 '''Define bot strategy.'''
+import threading
 import time
 from colorama import Fore
 
@@ -12,8 +13,9 @@ class MACD(Strategy):
     def __init__(self, dbmanager, arguments):
         Strategy.__init__(self, dbmanager, arguments)
 
-    # pylint: disable=C0103
+    # pylint: disable=C0103,R0914
     def run(self):
+        lock = threading.Lock()
         time.sleep(sync(60))
 
         A_1 = 0.15
@@ -58,10 +60,17 @@ class MACD(Strategy):
                 result = macds[-1] - ema_macd_9
 
                 if initialized:
+                    last_order = self._get_last_order()
                     if last_result <= 0 <= result:
-                        print(f'{Fore.MAGENTA}Up flow detected, buy signal.')
+                        if not last_order or last_order[0] == 'sell':
+                            price = self._purchase()
+                            with lock:
+                                print(f"{Fore.MAGENTA}{self.arguments['name']}: Buying at {price}")
                     elif result <= 0 <= last_result:
-                        print(f'{Fore.CYAN}Down flow detected, sell signal.')
+                        if last_order[0] == 'buy':
+                            price = self._sell()
+                            with lock:
+                                print(f"{Fore.CYAN}{self.arguments['name']}: Selling at {price}")
 
                     time.sleep(sync(61))
                 last_result = result
