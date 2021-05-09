@@ -8,6 +8,7 @@ colorama = "*"
 requests = "*"
 aiohttp = "*"
 pyyaml = "*"
+sqlalchemy = "*"
 
 [dev-packages]
 pylint = "*"

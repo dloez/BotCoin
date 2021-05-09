@@ -85,8 +85,8 @@ def main():
         # No config file + required tokens
         config = read_arguments(args)
 
-    # pylint: disable=W0612
     manager = Manager(STORAGE_DIR, config)
+    manager.start()
 
 
 STORAGE_DIR = Path('../storage')

@@ -12,20 +12,52 @@ DEFAULT_FIELDS = {
 }
 
 
-# pylint: disable=R0912
+def load_yaml(init_file):
+    '''Read and load yaml init file.'''
+    # check that files exists
+    if not init_file.exists():
+        return 'wrong init path'
+
+    # load yaml
+    with open(init_file, 'r') as file:
+        init_content = yaml.load(file, Loader=yaml.FullLoader)
+    return init_content
+
+
+def create_strat(tokens, strat):
+    '''Create new strat that can be appended to config.'''
+    if 'strat' not in strat.keys():
+        return 'unspecified strategy'
+
+    new_strat = {}
+    new_strat['strat'] = strat['strat']
+
+    if tokens:
+        new_strat['tokens'] = tokens
+    else:
+        new_strat['tokens'] = strat['tokens']
+
+    for field, value in DEFAULT_FIELDS.items():
+        if field not in strat.keys():
+            new_strat[field] = value
+        else:
+            value = strat[field]
+            if field == 'name':
+                value = value.lower().replace(' ', '')
+
+            new_strat[field] = value
+    return new_strat
+
+
 def read_file(init_file):
     '''Read and parse init file and return config. Search for missing arguments/errors.'''
     init_file = Path(init_file)
     config = SimpleNamespace()
 
-    # check that files exists
-    if not init_file.exists():
-        config.error = 'wrong init path'
+    init_content = load_yaml(init_file)
+    if isinstance(init_content, str):
+        config.error = init_content
         return config
-
-    # load yaml
-    with open(init_file, 'r') as file:
-        init_content = yaml.load(file, Loader=yaml.FullLoader)
 
     # check strategies
     if 'strategies' not in init_content.keys():
@@ -50,23 +82,11 @@ def read_file(init_file):
 
     config.strategies = []
     for strat in init_content['strategies']:
-        if 'strat' not in strat.keys():
-            config.error = 'unspecified strategy'
+        new_strat = create_strat(tokens, strat)
+        if isinstance(new_strat, str):
+            config.error = new_strat
             return config
 
-        new_strat = {}
-        new_strat['strat'] = strat['strat']
-
-        if tokens:
-            new_strat['tokens'] = tokens
-        else:
-            new_strat['tokens'] = strat['tokens']
-
-        for field, value in DEFAULT_FIELDS.items():
-            if field not in strat.keys():
-                new_strat[field] = value
-            else:
-                new_strat[field] = strat[field]
         config.strategies.append(new_strat)
 
     config.error = None

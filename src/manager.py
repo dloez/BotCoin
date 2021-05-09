@@ -12,14 +12,13 @@ from requester import Requester
 class Manager:
     '''Interface between strategies and db, collectores, etc.'''
     def __init__(self, storage_path, config):
-        self._dbmanager = None
+        self._dbmanager = DBManager(storage_path, config)
         self._requester = None
         self._strategies = []
         self._strategies_map = {
             'MACD': MACD
         }
 
-        self._dbmanager = DBManager(storage_path, config.id)
         for strat in config.strategies:
             if strat['strat'].upper() not in self._strategies_map.keys():
                 print(f"{Fore.RED}{strat['strat']} does not exists.")
@@ -31,10 +30,13 @@ class Manager:
                     value = f"{strat['strat']}_{random.randint(100000, 999999)}"
                 arguments[field] = value
 
-            strat = self._strategies_map[strat['strat'].upper()](self._dbmanager, arguments)
+            strat = self._strategies_map[strat['strat'].upper()](self._dbmanager, strat['orm'], arguments)
             self._strategies.append(strat)
 
         self._requester = Requester(self._dbmanager, self._strategies)
+
+    def start(self):
+        '''Init strategies and requester.'''
         self._execute_strategies()
 
     def _execute_strategies(self):
