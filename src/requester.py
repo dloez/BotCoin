@@ -9,13 +9,12 @@ from wrappers.binance import Binance
 # pylint: disable=R0903
 class Requester(threading.Thread):
     '''Recollect and store all data required by strategies.'''
-    def __init__(self, dbmanager, strategies):
+    def __init__(self, session, strategies):
         threading.Thread.__init__(self)
 
-        self._dbmanager = dbmanager
+        self._session = session()
         self._strategies = strategies
         self._binance = Binance()
-        self._session = self._dbmanager.session()
 
     def run(self):
         print(f'{Fore.BLUE}Initializing requester...')

@@ -22,9 +22,10 @@ CONFIG = SimpleNamespace(
                 'binance_api_key': 'TU8LjZiscsEGBV1rRrxWvEg0F7BovO4gM1Ukns44mAYRbtNukNaahTwQvJJDnB5J',
                 'binance_api_secret': '1M4ruKpeNOJrWjtHBDpGM1rhV7HBHDx5GQOm3NlSJSrN37Rt1LOD7ijxMpeioywm'
             },
-            'name': 'MACD_000000',
+            'name': 'macd001',
             'interval': 1,
-            'pair': 'XRPUSDT'
+            'pair': 'XRPUSDT',
+            'orm': (None, None)
         },
         {
             'strat': 'macd',
@@ -32,10 +33,11 @@ CONFIG = SimpleNamespace(
                 'binance_api_key': 'TU8LjZiscsEGBV1rRrxWvEg0F7BovO4gM1Ukns44mAYRbtNukNaahTwQvJJDnB5J',
                 'binance_api_secret': '1M4ruKpeNOJrWjtHBDpGM1rhV7HBHDx5GQOm3NlSJSrN37Rt1LOD7ijxMpeioywm'
             },
-            'name': 'MACD_000001',
+            'name': 'macd002',
             'pair': 'BTCUSDT',
             'interval': 1,
-            'offset': 0
+            'offset': 0,
+            'orm': (None, None)
         }
     ]
 )
@@ -58,11 +60,12 @@ def manager(mocker):
 
 
 def test_init(manager):
-    '''Test if all init values has been correctly settled.'''
+    '''Test if all init values have been correctly settled.'''
     assert len(manager._strategies) == len(CONFIG.strategies)
 
 
 def test_execute_strategies(manager):
     '''Test if requester and strategies have been started.'''
+    manager.start()
     manager._requester.start.assert_called_once()
     manager._strategies[0].start.assert_called()

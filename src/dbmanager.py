@@ -22,15 +22,19 @@ class DBManager():
         self._check_paths()
         self._check_id()
 
-        self.engine = create_engine(f"sqlite:///{str(self._databases_dir / self._session_id) + '.sqlite3'}")
+        self._engine = None
+        self._engine = create_engine(f"sqlite:///{str(self._databases_dir / self._session_id) + '.sqlite3'}")
+
+        # session = configured sessionmaker // _session = initiliazed session
         self.session = sessionmaker()
-        self.session.configure(bind=self.engine)
+        self.session.configure(bind=self._engine)
         self._session = self.session()
         self._create_orm(config.strategies)
 
     def _create_orm(self, strategies):
         '''Append ORM classes into strategies.'''
         counter = 0
+        strats = []
         for strat in strategies:
             prices_table_name = f"prices_{strat['pair'].lower()}_{strat['interval']}"
             orders_table_name = f"orders_{strat['name']}"
@@ -62,8 +66,12 @@ class DBManager():
                 price_table=price_attributes['__tablename__'],
                 order_table=order_attributes['__tablename__']
             )
+            strats.append(strat)
+        self.Base.metadata.create_all(self._engine)
+        self._session.query(Strategy).delete()
+
+        for strat in strats:
             self._session.add(strat)
-        self.Base.metadata.create_all(self.engine)
         self._session.commit()
 
     def _check_paths(self):
@@ -101,7 +109,7 @@ class DBManager():
 
 class Strategy(DBManager.Base):
     '''Strategy orm'''
-    __tablename__ = 'strategies_orm'
+    __tablename__ = 'strategies'
     id = Column(Integer, primary_key=True)
     name = Column(String)
     pair = Column(String)

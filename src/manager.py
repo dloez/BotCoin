@@ -30,10 +30,10 @@ class Manager:
                     value = f"{strat['strat']}_{random.randint(100000, 999999)}"
                 arguments[field] = value
 
-            strat = self._strategies_map[strat['strat'].upper()](self._dbmanager, strat['orm'], arguments)
+            strat = self._strategies_map[strat['strat'].upper()](self._dbmanager.session, strat['orm'], arguments)
             self._strategies.append(strat)
 
-        self._requester = Requester(self._dbmanager, self._strategies)
+        self._requester = Requester(self._dbmanager.session, self._strategies)
 
     def start(self):
         '''Init strategies and requester.'''

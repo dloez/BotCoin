@@ -14,12 +14,11 @@ def sync(interval):
 
 class Strategy(threading.Thread):
     '''Define structure of all strategies.'''
-    def __init__(self, dbmanager, orm, arguments):
+    def __init__(self, session, orm, arguments):
         threading.Thread.__init__(self)
 
         tokens = arguments['tokens']
-        self._dbmanager = dbmanager
-        self._session = self._dbmanager.session()
+        self._session = session()
         self._binance = Binance(key=tokens['binance_api_key'], secret=tokens['binance_api_secret'])
         self._name = arguments['name']
         self.arguments = arguments

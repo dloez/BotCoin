@@ -4,7 +4,7 @@ import hmac
 import time
 import aiohttp
 import requests
-from aiohttp.client_exceptions import ClientConnectorError
+from aiohttp.client_exceptions import ClientConnectorError, ClientPayloadError
 
 
 class Binance:
@@ -54,8 +54,8 @@ class Binance:
             async with aiohttp.ClientSession() as session:
                 async with session.get(f'{url}?{params}', headers=self._headers) as response:
                     return await response.json()
-        except ClientConnectorError:
-            self._async_get(url, params)
+        except (ClientConnectorError, ClientPayloadError):
+            await self._async_get(url, params)
 
 
     async def get_klines(self, symbol='XRPUSDT', interval='1m'):

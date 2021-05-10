@@ -25,18 +25,14 @@ def strategies():
 @pytest.fixture
 def requester(mocker, strategies):
     '''Manage requester as a test resource and isolate module.'''
-    dbmanager_mock = MagicMock()
-    dbmanager_mock.create_table.return_value = True
-    dbmanager_mock.truncate_table.return_value = True
-    dbmanager_mock.insert.return_value = True
-
     binance_mock = AsyncMock()
     binance_mock.get_klines.return_value = BINANCE_GET_KLINES
 
     binance_mocker = mocker.patch('src.requester.Binance')
     binance_mocker.return_value = binance_mock
 
-    return Requester(dbmanager_mock, strategies)
+    session = MagicMock()
+    return Requester(session, strategies)
 
 
 def test_init(requester, strategies):
@@ -50,7 +46,8 @@ async def test_request_data(requester, strategies, mocker):
     '''Test if requester is collecting required data.'''
     mocked_sleep = mocker.patch('asyncio.sleep')
     assert await requester._request_data(strategies[0])
+    requester._session.query.assert_called_once()
+    requester._session.add.assert_called()
+    requester._session.commit.assert_called_once()
     requester._binance.get_klines.assert_called_once()
-    requester._dbmanager.truncate_table.assert_called_once()
-    requester._dbmanager.insert.assert_called_once()
     mocked_sleep.assert_called_once()
