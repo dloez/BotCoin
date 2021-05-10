@@ -3,17 +3,16 @@ import threading
 import asyncio
 from colorama import Fore
 
-from dbmanager import RecordGroup
 from wrappers.binance import Binance
 
 
 # pylint: disable=R0903
 class Requester(threading.Thread):
     '''Recollect and store all data required by strategies.'''
-    def __init__(self, dbmanager, strategies):
+    def __init__(self, session, strategies):
         threading.Thread.__init__(self)
 
-        self._dbmanager = dbmanager
+        self._session = session()
         self._strategies = strategies
         self._binance = Binance()
 
@@ -40,12 +39,11 @@ class Requester(threading.Thread):
         requisites = strat.arguments
         klines = await self._binance.get_klines(requisites['pair'], f"{requisites['interval']}m")
 
-        records = RecordGroup(strat.prices_table)
+        self._session.query(strat.price).delete()
         for kline in klines:
-            records.add_record(value=kline[4])
+            price = strat.price(price=kline[4])
+            self._session.add(price)
+        self._session.commit()
 
-        self._dbmanager.truncate_table(strat.prices_table)
-        self._dbmanager.insert(records)
-
-        await asyncio.sleep(1)
+        await asyncio.sleep(5)
         return True

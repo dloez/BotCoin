@@ -4,6 +4,7 @@ sys.path.append('./src')
 
 # pylint: disable=C0413
 import os
+from types import SimpleNamespace
 from unittest.mock import MagicMock
 import pytest
 
@@ -16,26 +17,28 @@ ARGUMENTS = {
         'binance_api_key': os.environ['BINANCE_API_KEY'],
         'binance_api_secret': os.environ['BINANCE_API_SECRET']
     },
-    'name': 'TEST',
+    'name': 'test',
     'pair': 'XRPUSDT',
     'interval': 1,
     'offset': 0
 }
-DBMANAGER_SELECT = [(0,)] * 1000
+QUERY = [SimpleNamespace(price=0)] * 10
 
 
 # pylint: disable=W0212,W0621
 @pytest.fixture
 def strategy(mocker):
     '''Manager strategy as a test resource.'''
-    dbmanager_mock = MagicMock()
-    dbmanager_mock.create_table.return_value = True
-    dbmanager_mock.select.return_value = DBMANAGER_SELECT
+    binance_mock = MagicMock()
+    binance_mock.get_avg_price.return_value = '0'
 
     binance_mocker = mocker.patch('src.strategies.strategy.Binance')
-    binance_mocker.return_value = MagicMock()
+    binance_mocker.return_value = binance_mock()
 
-    strategy_fix = Strategy(dbmanager_mock, ARGUMENTS)
+    session = MagicMock()
+    session.all.return_value = QUERY
+
+    strategy_fix = Strategy(session, (MagicMock(), MagicMock()), ARGUMENTS)
     return strategy_fix
 
 
@@ -43,21 +46,31 @@ def test_init(strategy):
     '''Test if init values are correctly settled.'''
     assert strategy._name == ARGUMENTS['name']
     assert strategy.arguments == ARGUMENTS
-    assert strategy.prices_table == 'PRICES_XRPUSDT_1'
-    assert strategy.orders_table == 'ORDERS_TEST'
-
-
-def test_create_tables(strategy):
-    '''Test that tables has been created.'''
-    strategy._dbmanager.create_table.assert_called()
 
 
 def test_get_prices(strategy):
     '''Test that all records from the database has been collected.'''
     prices = strategy._get_prices()
-    strategy._dbmanager.select.assert_called_once()
+    strategy._session.query.assert_called_once()
     assert isinstance(prices, list)
-    assert len(prices) == len(DBMANAGER_SELECT)
+
+
+def test_purchase(strategy):
+    '''Test purchase.'''
+    strategy._purchase()
+    strategy._binance.get_avg_price.assert_called_once()
+    strategy.order.asser_called_once()
+    strategy._session.add.assert_called_once()
+    strategy._session.commit.assert_called_once()
+
+
+def test_sell(strategy):
+    '''Test purchase.'''
+    strategy._sell()
+    strategy._binance.get_avg_price.assert_called_once()
+    strategy.order.asser_called_once()
+    strategy._session.add.assert_called_once()
+    strategy._session.commit.assert_called_once()
 
 
 def test_sync():

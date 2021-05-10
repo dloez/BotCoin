@@ -1,6 +1,5 @@
 '''Define bot strategy.'''
 import time
-from colorama import Fore
 
 from strategies.strategy import Strategy
 from strategies.strategy import sync
@@ -9,8 +8,8 @@ from strategies.strategy import sync
 # pylint: disable=R0903
 class MACD(Strategy):
     '''Implements MACD trading algorithm.'''
-    def __init__(self, dbmanager, arguments):
-        Strategy.__init__(self, dbmanager, arguments)
+    def __init__(self, session, orm, arguments):
+        Strategy.__init__(self, session, orm, arguments)
 
     # pylint: disable=C0103
     def run(self):
@@ -26,7 +25,7 @@ class MACD(Strategy):
         macds = []
 
         last_result = 0
-        init_prices = self._wait_prices()
+        init_prices = self._get_prices()
 
         # init ema_12 and ema_26
         ema_12 = sum(init_prices[:12]) / 12
@@ -42,7 +41,7 @@ class MACD(Strategy):
                 if len(init_prices) == 1:
                     initialized = True
             else:
-                price = self._wait_prices()[-1]
+                price = self._get_prices()[-1]
 
             ema_12 = A_1 * price + (1 - A_1) * ema_12
             ema_26 = A_2 * price + (1 - A_2) * ema_26
@@ -58,17 +57,12 @@ class MACD(Strategy):
                 result = macds[-1] - ema_macd_9
 
                 if initialized:
+                    last_order = self._session.query(self.order).order_by(self.order.id.desc()).first()
                     if last_result <= 0 <= result:
-                        print(f'{Fore.MAGENTA}Up flow detected, buy signal.')
+                        if not last_order or last_order.side == 'sell':
+                            self._purchase()
                     elif result <= 0 <= last_result:
-                        print(f'{Fore.CYAN}Down flow detected, sell signal.')
-
+                        if last_order and last_order.side == 'buy':
+                            self._sell()
                     time.sleep(sync(61))
                 last_result = result
-
-    def _wait_prices(self):
-        '''In case there is no prices wait until we get them.'''
-        prices = []
-        while not prices:
-            prices = self._get_prices()
-        return prices
