@@ -49,8 +49,12 @@ class DBManager():
             order_attributes = {
                 '__tablename__': orders_table_name,
                 'id': Column(Integer, primary_key=True),
+                'order_id': Column(Integer),
                 'side': Column(String),
+                'symbol': Column(String),
                 'price': Column(Float),
+                'amount': Column(Float),
+                'status': Column(String), # NEW, CANCELED, FILLED, PARTIALLY_FILLED
                 'timestamp': Column(DateTime)
             }
 
