@@ -104,6 +104,12 @@ class Binance:
         params = f'symbol={symbol}'
         return self._get(uri, params)
 
+    def get_ticker_24hr(self, symbol):
+        '''Get 24 hour rolling window price change statistics.'''
+        uri = f'{self._base_url}/api/v3/ticker/24hr'
+        params = f'symbol={symbol}'
+        return self._get(uri, params)
+
     def get_exchange_info(self):
         '''
         Get exchange information.
@@ -155,7 +161,7 @@ class Binance:
         params = self._add_signature(params)
         return self._post(uri, params)
 
-    def new_order(self, symbol, side, order_type, price, quantity=None, quote_order_qty=None, stop_price=None, time_in_force=None):
+    def new_order(self, symbol, side, order_type, price=None, quantity=None, quote_order_qty=None, stop_price=None, time_in_force=None):
         '''
         Place a new order.
         Docs: https://binance-docs.github.io/apidocs/spot/en/#new-order-trade

@@ -80,7 +80,7 @@ def main():
                     total_fees += fees
 
             if orders and orders[-1].side == 'buy':
-                price = float(binance.get_avg_price(strat.pair)['price'])
+                price = float(binance.get_ticker_24hr(strat.pair)['lastPrice'])
                 total = total * price
 
             color = Fore.RESET
