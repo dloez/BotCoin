@@ -13,7 +13,7 @@ class MACD(Strategy):
 
     # pylint: disable=C0103
     def run(self):
-        time.sleep(sync(60))
+        time.sleep(sync(self.arguments['interval'] * 60))
 
         A_1 = 0.15
         A_2 = 0.07
@@ -64,5 +64,5 @@ class MACD(Strategy):
                     elif result <= 0 <= last_result:
                         if last_order and last_order.side == 'buy':
                             self._sell()
-                    time.sleep(sync(61))
+                    time.sleep(sync(self.arguments['interval'] * 60) + 1)
                 last_result = result
