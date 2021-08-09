@@ -1,6 +1,7 @@
 '''Comunicate REST APIs, strategies and databases'''
 import threading
 import asyncio
+from sqlalchemy import text
 from colorama import Fore
 
 from wrappers.binance import Binance
@@ -15,6 +16,7 @@ class Requester(threading.Thread):
         self._session = session()
         self._strategies = strategies
         self._binance = Binance()
+        self.initialized = False
 
     def run(self):
         print(f'{Fore.BLUE}Initializing requester...')
@@ -26,24 +28,23 @@ class Requester(threading.Thread):
             tasks = []
             requisites = []
             for strat in self._strategies:
-                strat_requisites = strat.arguments
-                new_requisites = (strat_requisites['pair'], strat_requisites['interval'])
+                new_requisites = (strat.data.symbol, strat.data.interval)
 
                 if new_requisites not in requisites:
                     tasks.append(asyncio.create_task(self._request_data(strat)))
                     requisites.append(new_requisites)
             await asyncio.wait(tasks)
+            self.initialized = True
+            await asyncio.sleep(30)
 
     async def _request_data(self, strat):
         '''Request and store the data needed by a strategy.'''
-        requisites = strat.arguments
-        klines = await self._binance.get_klines(requisites['pair'], f"{requisites['interval']}m")
+        klines = await self._binance.get_klines(strat.data.symbol, f"{strat.data.interval}m")
 
-        self._session.query(strat.price).delete()
+        self._session.execute(f'DELETE FROM {strat.prices_table}')
+        statement = text(f'INSERT INTO {strat.prices_table}(id, value) VALUES(:id, :value)')
         for kline in klines:
-            price = strat.price(price=kline[4])
-            self._session.add(price)
+            mapping = {'id': kline[0], 'value': kline[4]}
+            self._session.execute(statement, mapping)
         self._session.commit()
-
-        await asyncio.sleep(5)
         return True

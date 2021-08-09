@@ -3,19 +3,19 @@ import time
 import threading
 from datetime import datetime, timedelta
 
+import dbmanager
 from wrappers.binance import Binance
 
 
 class Listener(threading.Thread):
     '''Update orders status from binance.'''
-    def __init__(self, tokens, session, order_orm):
+    def __init__(self, tokens, session):
         threading.Thread.__init__(self)
 
         self._binance = Binance(tokens['binance_api_key'], tokens['binance_api_secret'])
         self._order = None
         self._seconds = None
-        self._session = session
-        self._order_orm = order_orm
+        self._session = session()
 
     def run(self):
         '''Update order and cancell it if it is not completed after self._seconds.'''
@@ -55,7 +55,7 @@ class Listener(threading.Thread):
                     quantity=self._order.amount
                 )
 
-                new_order = self._order_orm(
+                new_order = dbmanager.Order(
                     order_id=order_data['orderId'],
                     side='sell',
                     symbol=order_data['symbol'],

@@ -26,8 +26,8 @@ def parse_args(args):
 
     parser.add_argument(
         '--strat',
-        default='MACD',
-        help='strategy used for trading (Default = MACD). Available: MACD.'
+        default='strat1',
+        help='strategy used for trading (Default = strat1). Available: strat1.'
     )
 
     parser.add_argument(
@@ -37,9 +37,9 @@ def parse_args(args):
     )
 
     parser.add_argument(
-        '--pair',
+        '--symbol',
         default='XRPUSDT',
-        help='pair of cryptos used for trading. Example: XRPUSDT, BTCUSDT...'
+        help='symbol of cryptos used for trading. Example: XRPUSDT, BTCUSDT...'
     )
 
     parser.add_argument(
@@ -62,6 +62,13 @@ def parse_args(args):
         help='binance REST API key and secret. Format: api_key#api_secret'
     )
 
+    parser.add_argument(
+        '--test-mode',
+        dest='test_mode',
+        action='store_true',
+        help='enable test mode.'
+    )
+    parser.set_defaults(test_mode=False)
     return parser.parse_args(args)
 
 

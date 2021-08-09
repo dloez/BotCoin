@@ -4,8 +4,9 @@ import random
 import sys
 import os
 from sqlalchemy import create_engine
-from sqlalchemy.orm import declarative_base, sessionmaker
-from sqlalchemy import Column, Integer, Float, String, DateTime
+from sqlalchemy.orm import declarative_base, relationship, sessionmaker
+from sqlalchemy.sql.schema import ForeignKey
+from sqlalchemy import Table, Column, Integer, Float, String, DateTime
 from colorama import Fore
 
 
@@ -29,54 +30,18 @@ class DBManager():
         self.session = sessionmaker()
         self.session.configure(bind=self._engine)
         self._session = self.session()
-        self._create_orm(config.strategies)
+        self._init_database(config.strategies)
 
-    def _create_orm(self, strategies):
+    def _init_database(self, strategies):
         '''Append ORM classes into strategies.'''
-        counter = 0
-        strats = []
         for strat in strategies:
-            prices_table_name = f"prices_{strat['pair'].lower()}_{strat['interval']}"
-            orders_table_name = f"orders_{strat['name']}"
-
-            price_attributes = {
-                '__tablename__': prices_table_name,
-                '__table_args__': {'extend_existing': True},
-                'id': Column(Integer, primary_key=True),
-                'price': Column(Float)
-            }
-
-            order_attributes = {
-                '__tablename__': orders_table_name,
-                'id': Column(Integer, primary_key=True),
-                'order_id': Column(Integer),
-                'side': Column(String),
-                'symbol': Column(String),
-                'price': Column(Float),
-                'amount': Column(Float),
-                'status': Column(String), # NEW, CANCELED, FILLED, PARTIALLY_FILLED
-                'timestamp': Column(DateTime)
-            }
-
-            price_orm = type(f'ClosePrice{counter}', (self.Base,), price_attributes)
-            order_orm = type(f'Order{counter}', (self.Base,), order_attributes)
-            orm = (price_orm, order_orm)
-            strat['orm'] = orm
-            counter += 1
-
-            strat = Strategy(
-                name=strat['name'],
-                pair=strat['pair'],
-                price_table=price_attributes['__tablename__'],
-                order_table=order_attributes['__tablename__']
+            table_name = f"prices_{strat['symbol'].lower()}_{strat['interval']}"
+            Table(table_name, self.Base.metadata,
+                Column('id', Integer, primary_key=True),
+                Column('value', Float),
+                extend_existing=True
             )
-            strats.append(strat)
         self.Base.metadata.create_all(self._engine)
-        self._session.query(Strategy).delete()
-
-        for strat in strats:
-            self._session.add(strat)
-        self._session.commit()
 
     def _check_paths(self):
         '''Check that all necesary fields and dirs are created.'''
@@ -112,10 +77,23 @@ class DBManager():
 
 
 class Strategy(DBManager.Base):
-    '''Strategy orm'''
+    '''Strategy orm.'''
     __tablename__ = 'strategies'
+    name = Column(String, primary_key=True)
+    symbol = Column(String)
+    interval = Column(Integer)
+    offset = Column(Float)
+    orders = relationship('Order')
+
+
+class Order(DBManager.Base):
+    '''Order orm.'''
+    __tablename__ = 'orders'
     id = Column(Integer, primary_key=True)
-    name = Column(String)
-    pair = Column(String)
-    price_table = Column(String)
-    order_table = Column(String)
+    order_id = Column(Integer, nullable=True)
+    side = Column(String)
+    price = Column(Float)
+    quantity = Column(Float)
+    status = Column(String)
+    timestamp = Column(DateTime)
+    strategy_id = Column(Integer, ForeignKey('strategies.name'))

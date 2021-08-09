@@ -7,7 +7,7 @@ import yaml
 DEFAULT_FIELDS = {
     'name': None,
     'interval': 1, # minutes
-    'pair': 'XRPUSDT',
+    'symbol': 'XRPUSDT',
     'offset': 0
 }
 
@@ -80,6 +80,11 @@ def read_file(init_file):
     else:
         config.id = None
 
+    if 'test_mode' in init_content.keys():
+        config.test_mode = True
+    else:
+        config.test_mode = False
+
     config.strategies = []
     for strat in init_content['strategies']:
         new_strat = create_strat(tokens, strat)
@@ -97,6 +102,7 @@ def read_arguments(args):
     '''Read arguments and return config.'''
     config = SimpleNamespace()
     config.id = args.id
+    config.test_mode = args.test_mode
 
     strat = {
         'strat': args.strat,
@@ -105,9 +111,9 @@ def read_arguments(args):
             'binance_api_secret': args.tokens.split('#')[1]
         },
         'name': args.name,
-        'pair': args.pair,
+        'symbol': args.symbol,
         'interval': args.interval,
-        'offset': args.offset
+        'offset': args.offset,
     }
     config.strategies = []
     config.strategies.append(strat)

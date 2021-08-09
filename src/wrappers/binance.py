@@ -7,6 +7,19 @@ import requests
 from aiohttp.client_exceptions import ClientConnectorError, ClientPayloadError
 
 
+STATUS_NEW = 'NEW'
+STATUS_CANCELED = 'CANCELED'
+STATUS_FILLED = 'FILLED'
+STATUS_PARTIALLY_FILLED = 'PARTIALLY_FILLED'
+
+SIDE_BUY = 'BUY'
+SIDE_SELL = 'SELL'
+
+ORDER_MARKET = 'MARKET'
+ORDER_LIMIT = 'LIMIT'
+ORDER_STOP_LOSS_LIMIT = 'STOP_LOSS_LIMIT'
+
+
 class Binance:
     '''Manage authentication, uris, etc.'''
     def __init__(self, key='', secret=''):
@@ -139,28 +152,6 @@ class Binance:
         return self._delete(uri, params)
 
     # pylint: disable = R0913,C0301
-    def new_order_test(self, symbol, side, order_type, price, quantity=None, quote_order_qty=None, stop_price=None, time_in_force=None):
-        '''
-        Place a new test order.
-        Docs: https://binance-docs.github.io/apidocs/spot/en/#test-new-order-trade
-        '''
-        uri = f'{self._base_url}/api/v3/order/test'
-        params = f'symbol={symbol}&side={side}&type={order_type}&price={price}'
-
-        if order_type == 'STOP_LOSS_LIMIT':
-            params += f'&stopPrice={stop_price}'
-
-        if order_type == 'LIMIT':
-            params += f'&timeInForce={time_in_force}'
-
-        if quantity:
-            params += f'&quantity={quantity}'
-        else:
-            params += f'&quoteOrderQty={quote_order_qty}'
-
-        params = self._add_signature(params)
-        return self._post(uri, params)
-
     def new_order(self, symbol, side, order_type, price=None, quantity=None, quote_order_qty=None, stop_price=None, time_in_force=None):
         '''
         Place a new order.
@@ -169,13 +160,13 @@ class Binance:
         uri = f'{self._base_url}/api/v3/order'
         params = f'symbol={symbol}&side={side}&type={order_type}'
 
-        if order_type != 'MARKET':
+        if order_type != ORDER_MARKET:
             params += f'&price={price}'
 
-        if order_type == 'STOP_LOSS_LIMIT':
+        if order_type == ORDER_STOP_LOSS_LIMIT:
             params += f'&stopPrice={stop_price}'
 
-        if order_type == 'LIMIT':
+        if order_type == ORDER_LIMIT:
             params += f'&timeInForce={time_in_force}'
 
         if quantity:

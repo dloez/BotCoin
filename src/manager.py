@@ -4,8 +4,10 @@ import random
 from colorama import Fore
 
 from dbmanager import DBManager
-from strategies.macd import MACD
+from wrappers.binance import Binance
+from strategies.strat_1 import Strat1
 from requester import Requester
+from indicators.idmanager import IndicatorManager
 
 
 # pylint: disable=R0903
@@ -16,23 +18,34 @@ class Manager:
         self._requester = None
         self._strategies = []
         self._strategies_map = {
-            'MACD': MACD
+            'strat1': Strat1
         }
 
+        self._indicator_manager = IndicatorManager(self._dbmanager.session, config.test_mode)
+
+        binance = Binance()
+        symbols = binance.get_exchange_info()['symbols']
+
         for strat in config.strategies:
-            if strat['strat'].upper() not in self._strategies_map.keys():
+            if strat['strat'].lower() not in self._strategies_map.keys():
                 print(f"{Fore.RED}{strat['strat']} does not exists.")
                 sys.exit()
 
             arguments = {}
+            arguments['symbols'] = symbols
             for field, value in strat.items():
                 if field == 'name' and not value:
                     value = f"{strat['strat']}_{random.randint(100000, 999999)}"
                 arguments[field] = value
 
-            strat = self._strategies_map[strat['strat'].upper()](self._dbmanager.session, strat['orm'], arguments)
-            self._strategies.append(strat)
+            strat = self._strategies_map[strat['strat']](
+                self._dbmanager.session,
+                self._indicator_manager,
+                arguments,
+                config.test_mode
+            )
 
+            self._strategies.append(strat)
         self._requester = Requester(self._dbmanager.session, self._strategies)
 
     def start(self):
@@ -41,6 +54,10 @@ class Manager:
 
     def _execute_strategies(self):
         self._requester.start()
+
+        # wait until all indicators have their respective data.
+        while not self._requester.initialized:
+            continue
 
         for strat in self._strategies:
             strat.start()
