@@ -56,7 +56,10 @@ class RSI(Indicator):
                 self.rsi = 100 - 100 / (1 + relative_strength)
 
                 if self._test_mode:
-                    self._plotter.add_data((self.rsi,))
+                    self._store.append((self.rsi,))
+                    if len(self._store) == 100 or self.initialized:
+                        self._queue.put(self._store)
+                        self._store = []
 
                 if self.initialized:
                     now = datetime.now().replace(second=0, microsecond=0)

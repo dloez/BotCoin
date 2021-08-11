@@ -69,7 +69,10 @@ class MACD(Indicator):
                 self.result = self.macd - self.ema_macd_9
 
                 if self._test_mode:
-                    self._plotter.add_data((self.macd, self.ema_macd_9))
+                    self._store.append((self.macd, self.ema_macd_9))
+                    if len(self._store) == 100 or self.initialized:
+                        self._queue.put(self._store)
+                        self._store = []
 
                 if self.initialized:
                     now = datetime.now().replace(second=0, microsecond=0)

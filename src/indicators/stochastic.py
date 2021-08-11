@@ -27,6 +27,7 @@ class StochasticRSI(Indicator):
                 }
             )
             self._plotter.setup_plot(functions)
+            self._store = []
         self.start()
 
     def run(self):
@@ -79,7 +80,10 @@ class StochasticRSI(Indicator):
                     self.d = sum(stochastic['d']) / len(stochastic['d'])
 
                     if self._test_mode:
-                        self._plotter.add_data((self.k, self.d))
+                        self._store.append((self.k, self.d))
+                        if len(self._store) == 100 or self.initialized:
+                            self._queue.put(self._store)
+                            self._store = []
 
                     if self.initialized:
                         now = datetime.now().replace(second=0, microsecond=0)

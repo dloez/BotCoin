@@ -1,10 +1,11 @@
 '''Base class for indicators.'''
 import threading
+from multiprocessing import Queue
 
 from indicators.plotter import Plotter
 
 
-# pylint: disable=R0903
+# pylint: disable=R0902
 class Indicator(threading.Thread):
     '''Implementation of parent class for indicators.'''
     def __init__(self, session, test_mode, prices_table, interval):
@@ -17,7 +18,9 @@ class Indicator(threading.Thread):
         self.initialized = False
 
         if self._test_mode:
-            self._plotter = Plotter()
+            self._queue = Queue()
+            self._plotter = Plotter(self._queue, 1)
+            self._store = []
 
     def _get_prices(self):
         prices = self._session.execute(f'SELECT value FROM {self._prices_table}')

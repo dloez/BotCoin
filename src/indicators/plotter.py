@@ -1,33 +1,37 @@
 '''Plotting indicators data.'''
 import warnings
-import threading
+from multiprocessing import Process
 import matplotlib.pyplot as plt
 
 
-class Plotter(threading.Thread):
+class Plotter(Process):
     '''Shows indicators data using matplotlib plots.'''
-    def __init__(self):
-        threading.Thread.__init__(self)
+    def __init__(self, queue, idx):
+        Process.__init__(self)
         warnings.filterwarnings('ignore')
+
+        self.queue = queue
+        self.idx = idx
 
         self._figure = None
         self._ax = None
 
+        self._data = []
         self._functions = []
-        self._data = [[]]
-        self._lines = []
 
     def run(self):
         plt.ion()
         self._figure = plt.figure()
         self._ax = self._figure.add_subplot(111)
 
+        lines = []
         for function in self._functions:
-            self._data.append([])
-            self._lines.append(self._ax.plot((), (), f"{function['color']}{function['type']}")[0])
+            lines.append(self._ax.plot((), (), f"{function['color']}{function['type']}")[0])
 
         while True:
-            for i, line in enumerate(self._lines):
+            data = self.queue.get()
+            self._process_data(data)
+            for i, line in enumerate(lines):
                 line.set_xdata(self._data[0])
                 line.set_ydata(self._data[i + 1])
                 self._ax.relim()
@@ -40,15 +44,17 @@ class Plotter(threading.Thread):
         self._functions = functions
         self.start()
 
-    def add_data(self, data):
-        '''Add data to plot.'''
-        if len(self._data[0]) != 0:
-            self._data[0].append(self._data[0][-1] + 1)
-            self._data[0] = self._data[0][-100:]
-        else:
-            self._data[0].append(0)
+    def _process_data(self, data):
+        if len(data) == 100:
+            self._data = [[list(range(0, 100))]]
+            for _ in range(len(data[0])):
+                self._data.append([])
 
-        for i, value in enumerate(data):
-            self._data.append([])
-            self._data[i + 1].append(value)
-            self._data[i + 1] = self._data[i + 1][-100:]
+            for dataset in data:
+                for i, value in enumerate(dataset):
+                    self._data[i + 1].append(value)
+        else:
+            for dataset in data:
+                for i, value in enumerate(dataset):
+                    self._data[i + 1].append(value)
+                    self._data[i + 1] = self._data[i + 1][-100:]
