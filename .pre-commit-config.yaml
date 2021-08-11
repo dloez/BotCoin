@@ -9,7 +9,7 @@ repos:
 -   repo: local
     hooks:
     -   id: pylint
-        args: [--max-line-length=119]
+        args: [--rcfile=pylintrc]
         name: pylint
         entry: pylint
         language: system

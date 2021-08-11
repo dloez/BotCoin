@@ -3,9 +3,13 @@ import sys
 from colorama import Fore
 
 from indicators.macd import MACD
+from indicators.rsi import RSI
+from indicators.stochastic import StochasticRSI
 
 
 INDICATOR_MACD = 'MACD'
+INDICATOR_RSI = 'RSI'
+INDICATOR_STOCHASTIC_RSI = 'STOCH_RSI'
 
 
 # pylint: disable=R0903
@@ -16,7 +20,9 @@ class IndicatorManager:
         self._test_mode = test_mode
 
         self._indicators_map = {
-            'MACD': MACD
+            'MACD': MACD,
+            'RSI': RSI,
+            'STOCH_RSI': StochasticRSI
         }
         self._indicators = {}
 

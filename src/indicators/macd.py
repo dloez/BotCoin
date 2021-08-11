@@ -1,13 +1,13 @@
-'''Define bot strategy.'''
+'''Strategy indicator.'''
 import time
 from datetime import datetime, timedelta
 
 from indicators.indicator import Indicator
 
 
-# pylint: disable=R0903
 class MACD(Indicator):
-    '''Implements MACD trading algorithm.'''
+    '''Implements MACD trading indicator.'''
+    # pylint: disable=duplicate-code
     def __init__(self, session, test_mode, prices_table, interval):
         Indicator.__init__(self, session, test_mode, prices_table, interval)
 
@@ -32,13 +32,8 @@ class MACD(Indicator):
             self._plotter.setup_plot(functions)
         self.start()
 
-    # pylint: disable=C0103
     def run(self):
         '''Implementation of indicator.'''
-        A_1 = 0.15
-        A_2 = 0.07
-        A_3 = 0.2
-
         ema_12 = 0
         ema_26 = 0
         macds = []
@@ -55,13 +50,13 @@ class MACD(Indicator):
                 price = init_prices[0]
                 del init_prices[0]
 
-                if len(init_prices) == 1:
+                if len(init_prices) == 0:
                     self.initialized = True
             else:
                 price = self._get_last_price()
 
-            ema_12 = A_1 * price + (1 - A_1) * ema_12
-            ema_26 = A_2 * price + (1 - A_2) * ema_26
+            ema_12 = 0.15 * price + (1 - 0.15) * ema_12
+            ema_26 = 0.07 * price + (1 - 0.07) * ema_26
             self.macd = ema_12 - ema_26
             macds.append(self.macd)
             macds = macds[-9:]
@@ -70,7 +65,7 @@ class MACD(Indicator):
                 if not self.ema_macd_9:
                     self.ema_macd_9 = sum(macds) / 9
                 else:
-                    self.ema_macd_9 = A_3 * macds[-1] + (1 - A_3) * self.ema_macd_9
+                    self.ema_macd_9 = 0.2 * macds[-1] + (1 - 0.2) * self.ema_macd_9
                 self.result = self.macd - self.ema_macd_9
 
                 if self._test_mode:
@@ -78,7 +73,7 @@ class MACD(Indicator):
 
                 if self.initialized:
                     now = datetime.now().replace(second=0, microsecond=0)
-                    to = now + timedelta(seconds=self._interval * 60 + 2)
-                    while datetime.now() <= to:
+                    limit = now + timedelta(seconds=self._interval * 60 + 2)
+                    while datetime.now() <= limit:
                         time.sleep(0.5)
                 self.last_result = self.result
