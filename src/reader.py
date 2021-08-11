@@ -8,7 +8,9 @@ DEFAULT_FIELDS = {
     'name': None,
     'interval': 1, # minutes
     'symbol': 'XRPUSDT',
-    'offset': 0
+    'offset': 0,
+    'benefit': 1.5,
+    'loss': 0.25
 }
 
 
@@ -81,9 +83,9 @@ def read_file(init_file):
         config.id = None
 
     if 'test_mode' in init_content.keys():
-        config.test_mode = True
+        config.test_mode = init_content['test_mode']
     else:
-        config.test_mode = False
+        config.test_mode = 0
 
     config.strategies = []
     for strat in init_content['strategies']:
@@ -114,6 +116,8 @@ def read_arguments(args):
         'symbol': args.symbol,
         'interval': args.interval,
         'offset': args.offset,
+        'benefit': args.benefit,
+        'loss': args.loss
     }
     config.strategies = []
     config.strategies.append(strat)

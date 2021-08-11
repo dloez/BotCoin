@@ -63,12 +63,26 @@ def parse_args(args):
     )
 
     parser.add_argument(
+        '--benefit',
+        default=1.25,
+        help='target benefit for each trade (Default = 1.25).'
+    )
+
+    parser.add_argument(
+        '--loss',
+        default=0.25,
+        help='target loss for each trade (Default 0.25).'
+    )
+
+    parser.add_argument(
         '--test-mode',
         dest='test_mode',
-        action='store_true',
-        help='enable test mode.'
+        default=0,
+        type=int,
+        help='''
+            enable test mode (Default = 0). Available: 0 -> No test mode, 1 -> Test Orders, 2 -> Test Orders + Plots.'
+        '''
     )
-    parser.set_defaults(test_mode=False)
     return parser.parse_args(args)
 
 

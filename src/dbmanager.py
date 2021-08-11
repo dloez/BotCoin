@@ -83,6 +83,8 @@ class Strategy(DBManager.Base):
     symbol = Column(String)
     interval = Column(Integer)
     offset = Column(Float)
+    benefit = Column(Float)
+    loss = Column(Float)
     orders = relationship('Order')
 
 

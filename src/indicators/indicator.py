@@ -12,12 +12,13 @@ class Indicator(threading.Thread):
         threading.Thread.__init__(self)
 
         self._session = session()
-        self._test_mode = test_mode
+        self._test_mode = False
         self._prices_table = prices_table
         self._interval = interval
         self.initialized = False
 
-        if self._test_mode:
+        if test_mode == 2:
+            self._test_mode = True
             self._queue = Queue()
             self._plotter = Plotter(self._queue, 1)
             self._store = []

@@ -50,7 +50,9 @@ class Strategy(threading.Thread):
                 name=arguments['name'],
                 symbol=arguments['symbol'],
                 interval=arguments['interval'],
-                offset=arguments['offset']
+                offset=arguments['offset'],
+                benefit=arguments['benefit'],
+                loss=arguments['loss']
             )
             self.__session.add(self.data)
             self.__session.commit()
@@ -107,7 +109,7 @@ class Strategy(threading.Thread):
             quantity = adjust_size(quantity, step_size=self._symbol_assets['step_size'])
 
         binance_order_id = None
-        if not self._test_mode:
+        if self._test_mode != 0:
             order_data = self._binance.new_order(
                 symbol=self.data.symbol,
                 side=side,
