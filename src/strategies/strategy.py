@@ -1,12 +1,10 @@
 '''Parent of strategies.'''
 import sys
 import threading
-from datetime import datetime
 from colorama import Fore
 
 import dbmanager
 from wrappers.binance import Binance
-from wrappers.binance import SIDE_BUY, SIDE_SELL, STATUS_NEW
 from listener import Listener
 
 
@@ -97,42 +95,5 @@ class Strategy(threading.Thread):
             'precision': symbol_info['quoteAssetPrecision']
         }
 
-    def _new_order(self, side):
-        price = float(self._binance.get_ticker_24hr(self.data.symbol)['lastPrice']) + self.data.offset
-        price = adjust_size(price, tick_size=self._symbol_assets['tick_size'])
-
-        if side == SIDE_BUY:
-            quantity = float(self._binance.get_asset_balance(self._symbol_assets['quote']['asset'])['free']) / price
-            quantity = adjust_size(quantity, step_size=self._symbol_assets['step_size'])
-        elif side == SIDE_SELL:
-            quantity = self._binance.get_asset_balance(self._symbol_assets['base']['asset'])['free']
-            quantity = adjust_size(quantity, step_size=self._symbol_assets['step_size'])
-
-        binance_order_id = None
-        if self._test_mode != 0:
-            order_data = self._binance.new_order(
-                symbol=self.data.symbol,
-                side=side,
-                order_type='LIMIT',
-                price=price,
-                quantity=quantity,
-                time_in_force='GTC'
-            )
-            binance_order_id = order_data['orderId']
-
-        order = dbmanager.Order(
-            order_id=binance_order_id,
-            side=side,
-            price=price,
-            quantity=quantity,
-            status=STATUS_NEW,
-            timestamp=datetime.utcnow(),
-            strategy_id=self.data.name
-        )
-
-        session = self._session_maker()
-        session.add(order)
-        session.commit()
-
-        #self._listener.attach(order, 30)
-        print(f"{Fore.MAGENTA}{self.data.name}: New {side.lower()} order at {price}")
+    def _get_price(self):
+        return float(self._binance.get_ticker_24hr(self.data.symbol)['lastPrice'])

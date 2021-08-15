@@ -17,7 +17,10 @@ SIDE_SELL = 'SELL'
 
 ORDER_MARKET = 'MARKET'
 ORDER_LIMIT = 'LIMIT'
+ORDER_STOP_LOSS = 'STOP_LOSS'
 ORDER_STOP_LOSS_LIMIT = 'STOP_LOSS_LIMIT'
+
+TIME_IN_FORCE_GTC = 'GTC'
 
 
 class Binance:
@@ -160,8 +163,11 @@ class Binance:
         uri = f'{self._base_url}/api/v3/order'
         params = f'symbol={symbol}&side={side}&type={order_type}'
 
-        if order_type != ORDER_MARKET:
+        if order_type not in (ORDER_MARKET, ORDER_STOP_LOSS):
             params += f'&price={price}'
+
+        if order_type == ORDER_STOP_LOSS:
+            params += f'&stopPrice={stop_price}'
 
         if order_type == ORDER_STOP_LOSS_LIMIT:
             params += f'&stopPrice={stop_price}'
@@ -174,5 +180,15 @@ class Binance:
         else:
             params += f'&quoteOrderQty={quote_order_qty}'
 
+        params = self._add_signature(params)
+        return self._post(uri, params)
+
+    def new_oco(self, symbol, side, quantity, price, stop_price, limit_price, stop_limit_time_in_force):
+        '''
+        Place new OCO order.
+        Docs: https://binance-docs.github.io/apidocs/spot/en/#new-oco-trade
+        '''
+        uri = f'{self._base_url}/api/v3/order/oco'
+        params = f'symbol={symbol}&side={side}&quantity={quantity}&price={price}&stopPrice={stop_price}&stopLimitPrice={limit_price}&stopLimitTimeInForce={stop_limit_time_in_force}'
         params = self._add_signature(params)
         return self._post(uri, params)

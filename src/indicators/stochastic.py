@@ -45,7 +45,6 @@ class StochasticRSI(Indicator):
         while True:
             if init_prices:
                 prices.append(init_prices[0])
-                prices = prices[-2:]
                 del init_prices[0]
 
                 if len(init_prices) == 0:
@@ -53,6 +52,7 @@ class StochasticRSI(Indicator):
             else:
                 prices.append(self._get_last_price())
 
+            prices = prices[-2:]
             if len(prices) >= 2:
                 result = prices[-1] - prices[0]
                 gain = 0
