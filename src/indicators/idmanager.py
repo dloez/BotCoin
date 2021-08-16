@@ -15,8 +15,8 @@ INDICATOR_STOCHASTIC_RSI = 'STOCH_RSI'
 # pylint: disable=R0903
 class IndicatorManager:
     '''Manages the instantiation of new indicators of none available with same data requisites.'''
-    def __init__(self, session, test_mode):
-        self._session = session
+    def __init__(self, db_manager, test_mode):
+        self._db_manager = db_manager
         self._test_mode = test_mode
 
         self._indicators_map = {
@@ -36,6 +36,6 @@ class IndicatorManager:
             if indicator_name not in self._indicators_map.keys():
                 print(f'{Fore.RED}{indicator_name} indicator does not exists.')
                 sys.exit()
-            indicator = self._indicators_map[indicator_name](self._session, self._test_mode, table, interval)
+            indicator = self._indicators_map[indicator_name](self._db_manager, self._test_mode, table, interval)
             self._indicators[indicator_key] = indicator
         return indicator

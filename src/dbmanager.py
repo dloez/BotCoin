@@ -4,7 +4,7 @@ import random
 import sys
 import os
 from sqlalchemy import create_engine
-from sqlalchemy.orm import declarative_base, relationship, sessionmaker
+from sqlalchemy.orm import declarative_base, relationship, Session
 from sqlalchemy.sql.schema import ForeignKey
 from sqlalchemy import Table, Column, Integer, Float, String, DateTime
 from colorama import Fore
@@ -23,13 +23,7 @@ class DBManager():
         self._check_paths()
         self._check_id()
 
-        self._engine = None
         self._engine = create_engine(f"sqlite:///{str(self._databases_dir / self._session_id) + '.sqlite3'}")
-
-        # session = configured sessionmaker // _session = initiliazed session
-        self.session = sessionmaker()
-        self.session.configure(bind=self._engine)
-        self._session = self.session()
         self._init_database(config.strategies)
 
     def _init_database(self, strategies):
@@ -75,6 +69,9 @@ class DBManager():
         with self._last_session_file.open('wb') as file:
             pickle.dump(self._session_id, file)
 
+    def create_session(self):
+        '''Returns a new session.'''
+        return Session(self._engine)
 
 class Strategy(DBManager.Base):
     '''Strategy orm.'''

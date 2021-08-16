@@ -21,48 +21,55 @@ def adjust_size(amount, tick_size=0, step_size=0):
 # pylint: disable=R0902
 class Strategy(threading.Thread):
     '''Define structure of all strategies.'''
-    def __init__(self, session, indicator_manager, arguments, test_mode):
+    def __init__(self, db_manager, indicator_manager, arguments, test_mode):
         threading.Thread.__init__(self)
         self.name = arguments['name']
 
-        tokens = arguments['tokens']
-        self._session_maker = session
-        self.__session = self._session_maker()
-        self._binance = Binance(key=tokens['binance_api_key'], secret=tokens['binance_api_secret'])
+        self._tokens = arguments['tokens']
+        self._db_manager = db_manager
+        self._binance = Binance(key=self._tokens['binance_api_key'], secret=self._tokens['binance_api_secret'])
         self._indicator_manager = indicator_manager
         self._test_mode = test_mode
         self.prices_table = f"prices_{arguments['symbol'].lower()}_{arguments['interval']}"
-        self.data = None
+        self.data = {}
         self._init_strategy(arguments)
 
-        self._listener = Listener(tokens, self._session_maker)
+        self._listener = Listener(self._tokens, self._db_manager)
 
         self._symbol_assets = {}
         self._set_base_quote_assets(arguments['symbols'])
-        print(f'{Fore.GREEN}Loading strategy: {self.data.name}')
+        print(f'{Fore.GREEN}Loading strategy: {self.data["name"]}')
 
     def _init_strategy(self, arguments):
-        self.data = self.__session.query(dbmanager.Strategy).get(arguments['name'])
-        if not self.data:
-            self.data = dbmanager.Strategy(
-                name=arguments['name'],
-                symbol=arguments['symbol'],
-                interval=arguments['interval'],
-                offset=arguments['offset'],
-                benefit=arguments['benefit'],
-                loss=arguments['loss']
-            )
-            self.__session.add(self.data)
-            self.__session.commit()
+        with self._db_manager.create_session() as session:
+            strategy = session.query(dbmanager.Strategy).get(arguments['name'])
+            if not strategy:
+                strategy = dbmanager.Strategy(
+                    name=arguments['name'],
+                    symbol=arguments['symbol'],
+                    interval=arguments['interval'],
+                    offset=arguments['offset'],
+                    benefit=arguments['benefit'],
+                    loss=arguments['loss']
+                )
+                session.add(strategy)
+                session.commit()
+
+            self.data['name'] = strategy.name
+            self.data['symbol'] = strategy.symbol
+            self.data['interval'] = strategy.interval
+            self.data['offset'] = strategy.offset
+            self.data['benefit'] = strategy.benefit
+            self.data['loss'] = strategy.loss
 
     def _set_base_quote_assets(self, symbols):
         symbol_info = {}
         for symbol in symbols:
-            if symbol['symbol'] == self.data.symbol:
+            if symbol['symbol'] == self.data['symbol']:
                 symbol_info = symbol
 
         if not symbol_info:
-            print(f'{Fore.RED}The symbol {self.data.symbol} does not exists!')
+            print(f'{Fore.RED}The symbol {self.data["symbol"]} does not exists!')
             sys.exit()
 
         tick_size = 0
@@ -96,4 +103,4 @@ class Strategy(threading.Thread):
         }
 
     def _get_price(self):
-        return float(self._binance.get_ticker_24hr(self.data.symbol)['lastPrice'])
+        return float(self._binance.get_ticker_24hr(self.data['symbol'])['lastPrice'])

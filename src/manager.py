@@ -14,14 +14,14 @@ from indicators.idmanager import IndicatorManager
 class Manager:
     '''Interface between strategies and db, collectores, etc.'''
     def __init__(self, storage_path, config):
-        self._dbmanager = DBManager(storage_path, config)
+        self._db_manager = DBManager(storage_path, config)
         self._requester = None
         self._strategies = []
         self._strategies_map = {
             'strat1': Strat1
         }
 
-        self._indicator_manager = IndicatorManager(self._dbmanager.session, config.test_mode)
+        self._indicator_manager = IndicatorManager(self._db_manager, config.test_mode)
 
         binance = Binance()
         symbols = binance.get_exchange_info()['symbols']
@@ -39,14 +39,13 @@ class Manager:
                 arguments[field] = value
 
             strat = self._strategies_map[strat['strat']](
-                self._dbmanager.session,
+                self._db_manager,
                 self._indicator_manager,
                 arguments,
                 config.test_mode
             )
-
             self._strategies.append(strat)
-        self._requester = Requester(self._dbmanager.session, self._strategies)
+        self._requester = Requester(self._db_manager, self._strategies)
 
     def start(self):
         '''Init strategies and requester.'''

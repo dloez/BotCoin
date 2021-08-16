@@ -8,10 +8,10 @@ from indicators.plotter import Plotter
 # pylint: disable=R0902
 class Indicator(threading.Thread):
     '''Implementation of parent class for indicators.'''
-    def __init__(self, session, test_mode, prices_table, interval):
+    def __init__(self, db_manager, test_mode, prices_table, interval):
         threading.Thread.__init__(self)
 
-        self._session = session()
+        self._db_manager = db_manager
         self._test_mode = False
         self._prices_table = prices_table
         self._interval = interval
@@ -24,10 +24,12 @@ class Indicator(threading.Thread):
             self._store = []
 
     def _get_prices(self):
-        prices = self._session.execute(f'SELECT value FROM {self._prices_table}')
-        prices = [price[0] for price in prices]
-        return prices
+        with self._db_manager.create_session() as session:
+            prices = session.execute(f'SELECT value FROM {self._prices_table}')
+            prices = [price[0] for price in prices]
+            return prices
 
     def _get_last_price(self):
-        price = list(self._session.execute(f'SELECT value FROM {self._prices_table} ORDER BY id DESC LIMIT 1'))
-        return price[0][0]
+        with self._db_manager.create_session() as session:
+            price = list(session.execute(f'SELECT value FROM {self._prices_table} ORDER BY id DESC LIMIT 1'))
+            return price[0][0]
