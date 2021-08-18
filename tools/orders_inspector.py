@@ -1,18 +1,16 @@
-'''Check results for actuals orders.'''
+'''Calculate benefits/losses on bot runs.'''
 import sys
 sys.path.append('.')
 
 # pylint: disable=C0413
 import argparse
-import random
 from pathlib import Path
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy import Column, Integer, String, Float, DateTime
+from sqlalchemy.orm import Session
 from colorama import init, Fore
 
-from src.wrappers.binance import Binance
-from src.dbmanager import DBManager, Strategy
+from src.wrappers.binance import Binance, SIDE_BUY
+from src.dbmanager import Strategy, Order
 
 
 def parse_args(args):
@@ -20,9 +18,8 @@ def parse_args(args):
     parser = argparse.ArgumentParser(description='Return orders results.')
     parser.add_argument(
         '--start',
-        required=True,
         type=int,
-        help='Start ammount of money.'
+        help='Start ammount of money in case of test mode.'
     )
 
     return parser.parse_args(args)
@@ -31,29 +28,13 @@ def parse_args(args):
 def get_session(database):
     '''Return database session.'''
     engine = create_engine(f'sqlite:///{database}')
-    session = sessionmaker()
-    session.configure(bind=engine)
-    return session()
-
-
-def get_order_orm(base, strat):
-    '''Create order orm.'''
-    new_attrs = {
-        '__tablename__': strat.order_table,
-        '__table_args__': {'extend_existing': True},
-        'id': Column(Integer, primary_key=True),
-        'side': Column(String),
-        'price': Column(Float),
-        'timestamp': Column(DateTime)
-    }
-    return type(f'Order{random.randint(100, 999)}', (base,), new_attrs)
+    return Session(engine)
 
 
 def main():
     '''Load database and return orders result.'''
     init(autoreset=True)
     args = parse_args(sys.argv[1:])
-    base = DBManager.Base
     binance = Binance()
 
     databases = STORAGE_PATH.glob('**/*.sqlite3')
@@ -63,13 +44,12 @@ def main():
 
         strats = session.query(Strategy).all()
         for strat in strats:
-            order = get_order_orm(base, strat)
-            orders = session.query(order).all()
-
+            orders = list(session.query(Order).filter(Order.strategy_id==strat.name).all())
             total = args.start
             total_fees = 0
+
             for order in orders:
-                if order.side == 'buy':
+                if order.side == SIDE_BUY:
                     fees = FEES * total / 100
                     total_fees += fees
                     total = (total - fees) / order.price
