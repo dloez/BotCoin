@@ -6,6 +6,7 @@ from colorama import Fore
 from dbmanager import DBManager
 from wrappers.binance import Binance
 from strategies.strat_1 import Strat1
+from strategies.strat_2 import Strat2
 from requester import Requester
 from indicators.idmanager import IndicatorManager
 
@@ -18,7 +19,8 @@ class Manager:
         self._requester = None
         self._strategies = []
         self._strategies_map = {
-            'strat1': Strat1
+            'strat1': Strat1,
+            'strat2': Strat2
         }
 
         self._indicator_manager = IndicatorManager(self._db_manager, config.test_mode)

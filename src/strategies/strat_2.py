@@ -7,28 +7,22 @@ import dbmanager
 from strategies.strategy import Strategy, adjust_size
 from wrappers.binance import SIDE_SELL, SIDE_BUY, ORDER_MARKET, ORDER_LIMIT, STATUS_FILLED, STATUS_NEW
 from wrappers.binance import TIME_IN_FORCE_GTC
-from indicators.idmanager import INDICATOR_MACD, INDICATOR_RSI, INDICATOR_STOCHASTIC_RSI
+from indicators.idmanager import INDICATOR_RSI
 from listener import STATUS_WAITING
 
 
 # pylint: disable=R0903
-class Strat1(Strategy):
-    '''Implements Stochastic RSI + RSI + MACD trading algorithm.'''
+class Strat2(Strategy):
+    '''Implements RSI scalping trading algorithm.'''
     def __init__(self, db_manager, indicator_manager, arguments, test_mode):
         Strategy.__init__(self, db_manager, indicator_manager, arguments, test_mode)
 
-        self._macd = None
         self._rsi = None
-        self._stochastic = None
         self._indicators = ()
 
-    # Can be much more efficient but I preffer readability in this case.
-    # pylint: disable=R0914,R0915,R0912
     def run(self):
-        self._macd = self._indicator_manager.get_indicator(INDICATOR_MACD, self.prices_table)
         self._rsi = self._indicator_manager.get_indicator(INDICATOR_RSI, self.prices_table)
-        self._stochastic = self._indicator_manager.get_indicator(INDICATOR_STOCHASTIC_RSI, self.prices_table)
-        self._indicators = (self._macd, self._rsi, self._stochastic)
+        self._indicators = (self._rsi,)
 
         initialized = False
         while not initialized:
@@ -40,57 +34,18 @@ class Strat1(Strategy):
 
         # We are only going to take Long positions, so we do not need short entries
         same_entry = False
-        overbought = False
-        oversold = False
-        # confirm_overbought = False
-        confirm_oversold = False
-        upward_trend = False
-        # downward_trend = False
-        buy_signal = False
-        # sell_signal = False
 
         while True:
-            stoch_k = self._stochastic.k
-            stoch_d = self._stochastic.d
             rsi = self._rsi.rsi
-            result = self._macd.result
-            last_result = self._macd.last_result
-
-            # Stochastic RSI
-            if stoch_k > 80 and stoch_d > 80:
-                overbought = True
-                oversold = False
-
-            if stoch_k < 20 and stoch_d < 20:
-                oversold = True
-                overbought = False
 
             # RSI
-            if rsi < 50 and overbought:
-                # confirm_overbought = True
-                confirm_oversold = False
+            oversold = bool(rsi < 30)
+            # overbought = bool(rsi > 70)
 
-            if rsi > 50 and oversold:
-                confirm_oversold = True
-                # confirm_overbought = False
+            if 30 < rsi < 70 and same_entry:
+                same_entry = False
 
-            # MACD
-            if overbought and result <= 0 <= last_result:
-                # downward_trend = True
-                upward_trend = False
-
-            if oversold and last_result <= 0 <= result:
-                upward_trend = True
-                # downward_trend = False
-
-            # Signals
-            # if overbought and confirm_overbought and downward_trend:
-            #     sell_signal = True
-
-            if oversold and confirm_oversold and upward_trend:
-                buy_signal = True
-
-            if buy_signal and self._listener.status == STATUS_WAITING and not same_entry:
+            if oversold and self._listener.status == STATUS_WAITING and not same_entry:
                 self._buy()
                 same_entry = True
 
