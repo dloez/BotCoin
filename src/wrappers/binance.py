@@ -1,10 +1,11 @@
 '''Binance REST API Wrapper'''
+import sys
 import hashlib
 import hmac
 import time
 import aiohttp
 import requests
-from aiohttp.client_exceptions import ClientConnectorError, ClientPayloadError
+from aiohttp.client_exceptions import ClientConnectorError, ClientPayloadError, ServerDisconnectedError
 
 
 STATUS_NEW = 'NEW'
@@ -75,8 +76,11 @@ class Binance:
         try:
             async with aiohttp.ClientSession() as session:
                 async with session.get(f'{url}?{params}', headers=self._headers) as response:
+                    if response.status == 429:
+                        print('Too many requests from Binance, quitting...')
+                        sys.exit()
                     return await response.json()
-        except (ClientConnectorError, ClientPayloadError):
+        except (ClientConnectorError, ClientPayloadError, ServerDisconnectedError):
             await self._async_get(url, params)
 
     async def get_klines(self, symbol='XRPUSDT', interval='1m'):
