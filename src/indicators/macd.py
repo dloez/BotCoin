@@ -38,7 +38,8 @@ class MACD(Indicator):
         ema_26 = 0
         macds = []
 
-        init_prices = self._get_prices()
+        prices = self._get_prices()
+        init_prices = [price[3] for price in prices]
 
         # init ema_12 and ema_26
         ema_12 = sum(init_prices[:12]) / 12
@@ -53,7 +54,7 @@ class MACD(Indicator):
                 if len(init_prices) == 0:
                     self.initialized = True
             else:
-                price = self._get_last_price()
+                price = self._get_last_price()[3]
 
             ema_12 = 0.15 * price + (1 - 0.15) * ema_12
             ema_26 = 0.07 * price + (1 - 0.07) * ema_26

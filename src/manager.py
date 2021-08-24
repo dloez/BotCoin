@@ -23,8 +23,17 @@ class Manager:
             'strat2': Strat2
         }
 
-        self._indicator_manager = IndicatorManager(self._db_manager, config.test_mode)
+        self._requester = Requester()
+        self._indicator_manager = IndicatorManager(self._requester, config.test_mode)
 
+        self._build_strategies(config)
+        self._requester.set_strategies(self._strategies)
+
+    def start(self):
+        '''Init strategies and requester.'''
+        self._execute_strategies()
+
+    def _build_strategies(self, config):
         binance = Binance()
         symbols = binance.get_exchange_info()['symbols']
 
@@ -39,7 +48,6 @@ class Manager:
                 if field == 'name' and not value:
                     value = f"{strat['strat']}_{random.randint(100000, 999999)}"
                 arguments[field] = value
-
             strat = self._strategies_map[strat['strat']](
                 self._db_manager,
                 self._indicator_manager,
@@ -47,11 +55,6 @@ class Manager:
                 config.test_mode
             )
             self._strategies.append(strat)
-        self._requester = Requester(self._db_manager, self._strategies)
-
-    def start(self):
-        '''Init strategies and requester.'''
-        self._execute_strategies()
 
     def _execute_strategies(self):
         self._requester.start()

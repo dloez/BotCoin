@@ -6,7 +6,7 @@ import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, relationship, Session
 from sqlalchemy.sql.schema import ForeignKey
-from sqlalchemy import Table, Column, Integer, Float, String, DateTime
+from sqlalchemy import Column, Integer, Float, String, DateTime
 from colorama import Fore
 
 
@@ -24,17 +24,6 @@ class DBManager():
         self._check_id()
 
         self._engine = create_engine(f"sqlite:///{str(self._databases_dir / self._session_id) + '.sqlite3'}")
-        self._init_database(config.strategies)
-
-    def _init_database(self, strategies):
-        '''Append ORM classes into strategies.'''
-        for strat in strategies:
-            table_name = f"prices_{strat['symbol'].lower()}_{strat['interval']}"
-            Table(table_name, self.Base.metadata,
-                Column('id', Integer, primary_key=True),
-                Column('value', Float),
-                extend_existing=True
-            )
         self.Base.metadata.create_all(self._engine)
 
     def _check_paths(self):

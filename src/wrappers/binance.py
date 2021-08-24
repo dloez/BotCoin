@@ -1,11 +1,8 @@
 '''Binance REST API Wrapper'''
-import sys
 import hashlib
 import hmac
 import time
-import aiohttp
 import requests
-from aiohttp.client_exceptions import ClientConnectorError, ClientPayloadError, ServerDisconnectedError
 
 
 STATUS_NEW = 'NEW'
@@ -71,26 +68,14 @@ class Binance:
         '''Perform DELETE request to Binance REST API.'''
         return requests.delete(f'{url}?{params}', headers=self._headers).json()
 
-    async def _async_get(self, url, params=''):
-        '''Perfrom async get request to get data from Binance REST API.'''
-        try:
-            async with aiohttp.ClientSession() as session:
-                async with session.get(f'{url}?{params}', headers=self._headers) as response:
-                    if response.status == 429:
-                        print('Too many requests from Binance, quitting...')
-                        sys.exit()
-                    return await response.json()
-        except (ClientConnectorError, ClientPayloadError, ServerDisconnectedError):
-            await self._async_get(url, params)
-
-    async def get_klines(self, symbol='XRPUSDT', interval='1m'):
+    def get_klines(self, symbol='XRPUSDT', interval='1m'):
         '''
         Return kline/candlestick bars for a given symbol.
         Docs: https://binance-docs.github.io/apidocs/spot/en/#kline-candlestick-data
         '''
         uri = f'{self._base_url}/api/v3/klines'
         params = f'symbol={symbol}&interval={interval}&limit=1000'
-        return await self._async_get(uri, params)
+        return self._get(uri, params)
 
     def get_account(self):
         '''

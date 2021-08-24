@@ -25,7 +25,8 @@ class RSI(Indicator):
 
     def run(self):
         '''Implementation of indicator.'''
-        init_prices = self._get_prices()
+        prices = self._get_prices()
+        init_prices = [price[3] for price in prices]
         prices = []
         avg_gain = 1
         avg_loss = 1
@@ -38,7 +39,7 @@ class RSI(Indicator):
                 if len(init_prices) == 0:
                     self.initialized = True
             else:
-                prices.append(self._get_last_price())
+                prices.append(self._get_last_price()[3])
 
             prices = prices[-2:]
             if len(prices) >= 2:

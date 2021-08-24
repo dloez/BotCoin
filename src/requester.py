@@ -1,7 +1,7 @@
 '''Comunicate REST APIs, strategies and databases'''
 import threading
-import asyncio
-from sqlalchemy import text
+import time
+import numpy as np
 from colorama import Fore
 
 from wrappers.binance import Binance
@@ -10,42 +10,59 @@ from wrappers.binance import Binance
 # pylint: disable=R0903
 class Requester(threading.Thread):
     '''Recollect and store all data required by strategies.'''
-    def __init__(self, db_manager, strategies):
+    def __init__(self):
         threading.Thread.__init__(self)
 
-        self._db_manager = db_manager
-        self._strategies = strategies
         self._binance = Binance()
+
+        self._strategies = []
+        self._data = {}
+
         self.initialized = False
 
+    def set_strategies(self, strategies):
+        '''Set and clear requires strategies.'''
+        requisites = []
+        for strat in strategies:
+            new_requisites = f"{strat.data['symbol']}:{strat.data['interval']}"
+            if new_requisites not in requisites:
+                self._strategies.append(strat)
+
     def run(self):
-        print(f'{Fore.BLUE}Initializing requester...')
-        asyncio.run(self._handle_tasks())
+        print(f'{Fore.BLUE}Initializing requester...', end=' ')
 
-    async def _handle_tasks(self):
-        '''Define and run multiple asyncio tasks.'''
         while True:
-            tasks = []
-            requisites = []
+            threads = []
             for strat in self._strategies:
-                new_requisites = (strat.data['symbol'], strat.data['interval'])
+                thread = threading.Thread(target=self.request_data, args=(strat,))
+                thread.daemon = True
+                thread.start()
+                threads.append(thread)
 
-                if new_requisites not in requisites:
-                    tasks.append(asyncio.create_task(self._request_data(strat)))
-                    requisites.append(new_requisites)
-            await asyncio.wait(tasks)
-            self.initialized = True
-            await asyncio.sleep(30)
+            for thread in threads:
+                thread.join()
 
-    async def _request_data(self, strat):
+            if not self.initialized:
+                print('✔️')
+                self.initialized = True
+            time.sleep(10)
+
+    def request_data(self, strat):
         '''Request and store the data needed by a strategy.'''
-        klines = await self._binance.get_klines(strat.data['symbol'], f"{strat.data['interval']}m")
+        klines = self._binance.get_klines(strat.data['symbol'], f"{strat.data['interval']}m")
+        key = f"{strat.data['symbol']}:{strat.data['interval']}"
+        self._data[key] = np.empty((1000, 4))
 
-        with self._db_manager.create_session() as session:
-            session.execute(f'DELETE FROM {strat.prices_table}')
-            statement = text(f'INSERT INTO {strat.prices_table}(id, value) VALUES(:id, :value)')
-            for kline in klines:
-                mapping = {'id': kline[0], 'value': kline[4]}
-                session.execute(statement, mapping)
-            session.commit()
-        return True
+        for i, kline in enumerate(klines):
+            del kline[0]
+            # Open, High, Low, Closs
+            for j in range(4):
+                self._data[key][i][j] = kline[j]
+
+    def get_data(self, symbol, interval):
+        '''Return new numpy array with data from Exchange API depending on requirements.'''
+        key = f'{symbol}:{interval}'
+
+        if key not in self._data.keys():
+            return None
+        return np.array(self._data[key])
