@@ -2,6 +2,7 @@
 import hashlib
 import hmac
 import time
+import sys
 import requests
 
 
@@ -58,7 +59,12 @@ class Binance:
 
     def _get(self, url, params=''):
         '''Perform GET request to Binance REST API.'''
-        return requests.get(f'{url}?{params}', headers=self._headers).json()
+        response = requests.get(f'{url}?{params}', headers=self._headers)
+        if response.status_code == 429:
+            with open('log.txt', 'w') as file:
+                file.write('Too many requests')
+            sys.exit()
+        return response.json()
 
     def _post(self, url, params=''):
         '''Perform POST request to Binance REST API.'''
