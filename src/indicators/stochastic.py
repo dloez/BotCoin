@@ -1,15 +1,12 @@
 '''Strategy indicator.'''
-import time
-from datetime import datetime, timedelta
-
 from indicators.indicator import Indicator
 
 
 class StochasticRSI(Indicator):
     '''Implement Stochastic RSI trading indicator.'''
-    # pylint: disable=C0103,R0801
-    def __init__(self, session, test_mode, prices_table, interval):
-        super().__init__(session, test_mode, prices_table, interval)
+    # pylint: disable=C0103
+    def __init__(self, test_mode, requester, arguments):
+        Indicator.__init__(self, test_mode, requester, arguments)
 
         self.k = 0
         self.d = 0
@@ -27,7 +24,6 @@ class StochasticRSI(Indicator):
                 }
             )
             self._plotter.setup_plot(functions)
-            self._store = []
         self.start()
 
     def run(self):
@@ -87,7 +83,4 @@ class StochasticRSI(Indicator):
                             self._store = []
 
                     if self.initialized:
-                        now = datetime.now().replace(second=0, microsecond=0)
-                        limit = now + timedelta(seconds=self._interval * 60 + 2)
-                        while datetime.now() <= limit:
-                            time.sleep(0.5)
+                        self._wait_until_interval()

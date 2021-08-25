@@ -1,15 +1,11 @@
 '''Strategy indicator.'''
-import time
-from datetime import datetime, timedelta
-
 from indicators.indicator import Indicator
 
 
 class RSI(Indicator):
     '''Implement RSI trading indicator.'''
-    # pylint: disable=duplicate-code
-    def __init__(self, session, test_mode, prices_table, interval):
-        super().__init__(session, test_mode, prices_table, interval)
+    def __init__(self, test_mode, requester, arguments):
+        Indicator.__init__(self, test_mode, requester, arguments)
 
         self.rsi = 0
         if self._test_mode:
@@ -63,7 +59,4 @@ class RSI(Indicator):
                         self._store = []
 
                 if self.initialized:
-                    now = datetime.now().replace(second=0, microsecond=0)
-                    limit = now + timedelta(seconds=self._interval * 60 + 2)
-                    while datetime.now() <= limit:
-                        time.sleep(0.5)
+                    self._wait_until_interval()

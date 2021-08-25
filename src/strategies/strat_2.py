@@ -3,7 +3,7 @@ import time
 from datetime import datetime, timedelta
 
 from strategies.strategy import Strategy
-from indicators.idmanager import INDICATOR_RSI
+from indicators.idmanager import INDICATOR_STOCHASTIC_RSI, INDICATOR_SUPERTREND, INDICATOR_EMA
 from listener import STATUS_WAITING
 
 
@@ -13,12 +13,42 @@ class Strat2(Strategy):
     def __init__(self, db_manager, indicator_manager, arguments, test_mode):
         Strategy.__init__(self, db_manager, indicator_manager, arguments, test_mode)
 
-        self._rsi = None
+        self._stochastic = None
+        self._super_trend_1 = None
+        self._super_trend_2 = None
+        self._super_trend_3 = None
+        self._ema = None
         self._indicators = ()
 
+    # pylint: disable=R0914
     def run(self):
-        self._rsi = self._indicator_manager.get_indicator(INDICATOR_RSI, self.data['symbol'], self.data['interval'])
-        self._indicators = (self._rsi,)
+        common_args = {
+            'symbol': self.data['symbol'],
+            'interval': self.data['interval']
+        }
+
+        supertrend_args_1 = dict(common_args)
+        supertrend_args_1['length'] = 12
+        supertrend_args_1['factor'] = 3
+
+        supertrend_args_2 = dict(common_args)
+        supertrend_args_2['length'] = 11
+        supertrend_args_2['factor'] = 2
+
+        supertrend_args_3 = dict(common_args)
+        supertrend_args_3['length'] = 10
+        supertrend_args_3['factor'] = 1
+
+        ema_args = dict(common_args)
+        ema_args['length'] = 200
+        ema_args['smoothing'] = 2
+
+        self._stochastic = self._indicator_manager.get_indicator(INDICATOR_STOCHASTIC_RSI, common_args)
+        self._super_trend_1 = self._indicator_manager.get_indicator(INDICATOR_SUPERTREND, supertrend_args_1)
+        self._super_trend_2 = self._indicator_manager.get_indicator(INDICATOR_SUPERTREND, supertrend_args_2)
+        self._super_trend_3 = self._indicator_manager.get_indicator(INDICATOR_SUPERTREND, supertrend_args_3)
+        self._ema = self._indicator_manager.get_indicator(INDICATOR_EMA, ema_args)
+        self._indicators = (self._stochastic, self._super_trend_1, self._super_trend_2, self._super_trend_3, self._ema)
 
         initialized = False
         while not initialized:
@@ -30,18 +60,33 @@ class Strat2(Strategy):
 
         # We are only going to take Long positions, so we do not need short entries
         same_entry = False
-
+        oversold = False
         while True:
-            rsi = self._rsi.rsi
+            buy_signal = False
+            stoch_k = self._stochastic.k
+            stoch_d = self._stochastic.d
+            trends = 0
 
-            # RSI
-            oversold = bool(rsi < 30)
-            # overbought = bool(rsi > 70)
+            # Stochastic RSI
+            if stoch_d < 20 and stoch_k < 20:
+                oversold = True
 
-            if 30 < rsi < 70 and same_entry:
+            if stoch_d > 50 and stoch_d > 50:
+                oversold = False
                 same_entry = False
 
-            if oversold and self._listener.status == STATUS_WAITING and not same_entry:
+            # SuperTrend
+            if self._super_trend_1.trend:
+                trends += 1
+            if self._super_trend_2.trend:
+                trends += 1
+            if self._super_trend_3.trend:
+                trends += 1
+
+            if oversold and trends >= 2 and self._get_price() > self._ema.ema:
+                buy_signal = True
+
+            if buy_signal and self._listener.status == STATUS_WAITING and not same_entry:
                 self._buy()
                 same_entry = True
 

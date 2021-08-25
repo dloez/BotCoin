@@ -1,5 +1,7 @@
 '''Base class for indicators.'''
 import threading
+import time
+from datetime import datetime, timedelta
 from multiprocessing import Queue
 
 from plotter import Plotter
@@ -8,13 +10,12 @@ from plotter import Plotter
 # pylint: disable=R0902
 class Indicator(threading.Thread):
     '''Implementation of parent class for indicators.'''
-    def __init__(self, test_mode, requester, symbol, interval):
+    def __init__(self, test_mode, requester, arguments):
         threading.Thread.__init__(self)
 
         self._test_mode = False
         self._requester = requester
-        self._symbol = symbol
-        self._interval = interval
+        self._arguments = arguments
         self.initialized = False
 
         if test_mode == 2:
@@ -23,8 +24,14 @@ class Indicator(threading.Thread):
             self._plotter = Plotter(self._queue, 1)
             self._store = []
 
+    def _wait_until_interval(self):
+        now = datetime.now().replace(second=0, microsecond=0)
+        limit = now + timedelta(seconds=self._arguments['interval'] * 60 + 2)
+        while datetime.now() <= limit:
+            time.sleep(0.5)
+
     def _get_prices(self):
-        return self._requester.get_data(self._symbol, self._interval)
+        return self._requester.get_data(self._arguments['symbol'], self._arguments['interval'])
 
     def _get_last_price(self):
-        return self._requester.get_data(self._symbol, self._interval)[-1]
+        return self._requester.get_data(self._arguments['symbol'], self._arguments['interval'])[-1]

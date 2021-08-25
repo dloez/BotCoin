@@ -21,13 +21,13 @@ class Strat1(Strategy):
     # Can be much more efficient but I preffer readability in this case.
     # pylint: disable=R0914,R0915,R0912
     def run(self):
-        self._macd = self._indicator_manager.get_indicator(INDICATOR_MACD, self.data['symbol'], self.data['interval'])
-        self._rsi = self._indicator_manager.get_indicator(INDICATOR_RSI, self.data['symbol'], self.data['interval'])
-        self._stochastic = self._indicator_manager.get_indicator(
-            INDICATOR_STOCHASTIC_RSI,
-            self.data['symbol'],
-            self.data['interval']
-        )
+        common_args = {
+            'symbol': self.data['symbol'],
+            'interval': self.data['interval'],
+        }
+        self._macd = self._indicator_manager.get_indicator(INDICATOR_MACD, common_args)
+        self._rsi = self._indicator_manager.get_indicator(INDICATOR_RSI, common_args)
+        self._stochastic = self._indicator_manager.get_indicator(INDICATOR_STOCHASTIC_RSI, common_args)
         self._indicators = (self._macd, self._rsi, self._stochastic)
 
         initialized = False
