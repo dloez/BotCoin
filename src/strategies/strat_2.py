@@ -20,7 +20,7 @@ class Strat2(Strategy):
         self._ema = None
         self._indicators = ()
 
-    # pylint: disable=R0914
+    # pylint: disable=R0914,R0915
     def run(self):
         common_args = {
             'symbol': self.data['symbol'],
@@ -68,7 +68,11 @@ class Strat2(Strategy):
             trends = 0
 
             # Stochastic RSI
-            if stoch_d < 20 and stoch_k < 20:
+
+            cross_up = self._stochastic.result <= 0 <= self._stochastic.last_result
+            cross_down = self._stochastic.last_result <= 0 <= self._stochastic.result
+
+            if stoch_d < 20 and stoch_k < 20 and (cross_up or cross_down):
                 oversold = True
 
             if stoch_d > 50 and stoch_d > 50:

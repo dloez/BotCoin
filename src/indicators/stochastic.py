@@ -10,6 +10,8 @@ class StochasticRSI(Indicator):
 
         self.k = 0
         self.d = 0
+        self.result = 0
+        self.last_result = 0
         if self._test_mode:
             functions = (
                 {
@@ -76,6 +78,7 @@ class StochasticRSI(Indicator):
                     stochastic['d'] = stochastic['d'][-3:]
                     self.d = sum(stochastic['d']) / len(stochastic['d'])
 
+                    self.result = self.d - self.k
                     if self._test_mode:
                         self._store.append((self.k, self.d))
                         if len(self._store) == 100 or self.initialized:
@@ -84,3 +87,4 @@ class StochasticRSI(Indicator):
 
                     if self.initialized:
                         self._wait_until_interval()
+                    self.last_result = self.result
