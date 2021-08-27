@@ -4,6 +4,7 @@ import hmac
 import time
 import sys
 import requests
+from requests.exceptions import ChunkedEncodingError
 
 
 STATUS_NEW = 'NEW'
@@ -59,7 +60,11 @@ class Binance:
 
     def _get(self, url, params=''):
         '''Perform GET request to Binance REST API.'''
-        response = requests.get(f'{url}?{params}', headers=self._headers)
+        try:
+            response = requests.get(f'{url}?{params}', headers=self._headers)
+        except ChunkedEncodingError:
+            self._get(url, params)
+
         if response.status_code == 429:
             with open('log.txt', 'w') as file:
                 file.write('Too many requests')
