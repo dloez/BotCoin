@@ -3,8 +3,9 @@ import hashlib
 import hmac
 import time
 import sys
+import os
+from datetime import datetime
 import requests
-from requests.exceptions import ChunkedEncodingError
 
 
 STATUS_NEW = 'NEW'
@@ -23,6 +24,13 @@ ORDER_STOP_LOSS_LIMIT = 'STOP_LOSS_LIMIT'
 TIME_IN_FORCE_GTC = 'GTC'
 
 
+def init_log_file():
+    '''Hasndle new log file creation.'''
+    if not os.path.exists('log.txt'):
+        with open('log.txt', 'w') as _:
+            pass
+
+
 class Binance:
     '''Manage authentication, uris, etc.'''
     def __init__(self, key='', secret=''):
@@ -31,6 +39,8 @@ class Binance:
         self._base_url = 'https://api.binance.com'
         self._timestamp_offset = 0
         self._headers = {'X-MBX-APIKEY': self._tokens[0]}
+
+        init_log_file()
 
     def _set_timestamp_offset(self):
         '''Calculate difference between binance server timestamp and server.'''
@@ -58,15 +68,18 @@ class Binance:
         params += f'&signature={signature}'
         return params
 
+    # pylint: disable=W0703
     def _get(self, url, params=''):
         '''Perform GET request to Binance REST API.'''
         try:
             response = requests.get(f'{url}?{params}', headers=self._headers)
-        except ChunkedEncodingError:
-            self._get(url, params)
+        except Exception as error:
+            with open('log.txt', 'a') as file:
+                file.write(f'{datetime.utcnow().strftime("%b %d %Y %H:%M:%S")} >>> {error}')
+            return None
 
         if response.status_code == 429:
-            with open('log.txt', 'w') as file:
+            with open('log.txt', 'a') as file:
                 file.write('Too many requests')
             sys.exit()
         return response.json()

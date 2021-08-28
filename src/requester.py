@@ -50,6 +50,10 @@ class Requester(threading.Thread):
     def request_data(self, strat):
         '''Request and store the data needed by a strategy.'''
         klines = self._binance.get_klines(strat.data['symbol'], f"{strat.data['interval']}m")
+
+        if not klines:
+            return False
+
         key = f"{strat.data['symbol']}:{strat.data['interval']}"
         self._data[key] = np.empty((1000, 4))
 
@@ -58,6 +62,7 @@ class Requester(threading.Thread):
             # Open, High, Low, Closs
             for j in range(4):
                 self._data[key][i][j] = kline[j]
+        return True
 
     def get_data(self, symbol, interval):
         '''Return new numpy array with data from Exchange API depending on requirements.'''
